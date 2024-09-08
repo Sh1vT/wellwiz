@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "750771365952",
+    "project_id": "wellwiz-36ce7",
+    "storage_bucket": "wellwiz-36ce7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:750771365952:android:9b86a9d1c6f545829497a5",
+        "android_client_info": {
+          "package_name": "com.Sh1vT.WellnessWiz"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "750771365952-jjhsfh4vkees0jbtco1m103sfvm69j71.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.Sh1vT.WellnessWiz",
+            "certificate_hash": "0afd56af129330c5f15789d2b9a81b6fb47fa890"
+          }
+        },
+        {
+          "client_id": "750771365952-vdac172ejc5fo69qctc2mckugigijl2e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcm19bnri3bIhnbjdXuqmnDQvi9eZQmgA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "750771365952-vdac172ejc5fo69qctc2mckugigijl2e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "750771365952-ch83j7qvc1qo78nkbqa0jb6r8jq3of2l.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.wellwiz"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
