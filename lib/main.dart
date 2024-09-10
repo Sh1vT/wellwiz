@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/firebase_options.dart';
@@ -28,7 +29,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: LoginScreen(),
+      home: DocView(),
     );
   }
 }
