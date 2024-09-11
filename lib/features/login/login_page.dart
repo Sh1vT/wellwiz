@@ -32,7 +32,7 @@ class LoginScreen extends StatelessWidget {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => BotScreen()),
+        MaterialPageRoute(builder: (context) => const BotScreen()),
       );
     } catch (e) {
       print("Exception: $e");
@@ -44,7 +44,7 @@ class LoginScreen extends StatelessWidget {
     return Scaffold(
       body: Center(
         child: ElevatedButton(
-          child: Text("Sign-in with Google"),
+          child: const Text("Sign-in with Google"),
           onPressed: () => _signInWithGoogle(context),
         ),
       ),

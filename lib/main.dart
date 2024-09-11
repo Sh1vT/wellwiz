@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/firebase_options.dart';
+import 'package:wellwiz/features/appointments/doc_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +35,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> initialiseUser() async {
     // await GoogleSignIn().signOut();
     try {
-      final user = await FirebaseAuth.instance.currentUser;
+      final user = FirebaseAuth.instance.currentUser;
       setState(() {
         _user = user;
         _isLoading = false;
@@ -48,7 +49,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context) { 
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
@@ -56,10 +57,10 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: _isLoading
-          ? CircularProgressIndicator()
+          ? const Center(child: CircularProgressIndicator()) // Show loader while checking authentication
           : (_user == null)
-              ? LoginScreen()
-              : BotScreen(),
+              ? const LoginScreen()
+              : BotScreen(), // Pass userId here
     );
   }
 }
