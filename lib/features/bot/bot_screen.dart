@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'message_tile.dart';
+import 'package:wellwiz/features/navbar/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart'; // If using authentication
 
@@ -233,6 +234,10 @@ class _BotScreenState extends State<BotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Chat Bot'),
+      ),
+      drawer: Navbar(userId: _auth.currentUser?.uid ?? ''), // Pass userId here
       body: SafeArea(
         child: Stack(
           children: [
@@ -269,7 +274,7 @@ class _BotScreenState extends State<BotScreen> {
                 }
 
                 // If there's no valid text or button, return an empty widget
-                return SizedBox.shrink();
+                return const SizedBox.shrink();
               },
               separatorBuilder: (context, index) {
                 return const SizedBox(height: 15);
@@ -292,7 +297,7 @@ class _BotScreenState extends State<BotScreen> {
                       child: SizedBox(
                         height: 55,
                         child: TextField(
-                          cursorColor: Colors.pink,
+                          cursorColor: Colors.green.shade400,
                           controller: _textController,
                           autofocus: true,
                           focusNode: _textFieldFocus,
@@ -329,7 +334,7 @@ class _BotScreenState extends State<BotScreen> {
                         height: 50,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: Colors.pink,
+                          color: Colors.green.shade400,
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
