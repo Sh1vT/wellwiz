@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 import 'package:wellwiz/features/login/login_page.dart';
+import 'package:wellwiz/features/profile/profile.dart';
 
 class Navbar extends StatelessWidget {
   final String userId;
@@ -46,6 +47,10 @@ class Navbar extends StatelessWidget {
               ///
               ///
               ///
+              Navigator.of(context).push(MaterialPageRoute(builder: (context)
+              {
+                return ProfilePage();
+              }));
             },
           ),
           Padding(
