@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -9,23 +10,56 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   // Sample list of profile values, replace with actual values from SharedPreferences later
-  List<String> profileValues = [
-    'Cannot eat root vegetables',
-    'Has injured wrist',
-  ];
+  List<String> profileValues = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _populateProfile();
+  }
+
+  void _populateProfile() async {
+    final pref = await SharedPreferences.getInstance();
+    String prefval = pref.getString('prof') ?? "";
+    if (prefval == "") {
+      return;
+    }
+
+    setState(() {
+      profileValues = prefval.split(RegExp(r'[.\n]'));
+      profileValues = profileValues
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    });
+    print(profileValues);
+  }
 
   // Method to delete an entry
-  void _deleteProfileValue(int index) {
+  void _deleteProfileValue(int index) async {
+    final pref = await SharedPreferences.getInstance();
+    String prefval = pref.getString('prof')!;
+    profileValues.removeAt(index);
+    prefval=profileValues.join('.\n');
+    pref.setString('prof',prefval);
+    
     setState(() {
-      profileValues.removeAt(index);
+      // profileValues.removeAt(index);
+
       // Implement logic to update SharedPreferences here
     });
   }
 
   // Method to add a new profile value
-  void _addProfileValue(String newValue) {
+  void _addProfileValue(String newValue) async {
+    profileValues.add(newValue);
+    final pref = await SharedPreferences.getInstance();
+    String prefval = pref.getString('prof')!;
+    String updatedval=prefval+".\n$newValue.\n";
+    pref.setString('prof', updatedval);
+    print(updatedval);
     setState(() {
-      profileValues.add(newValue);
       // Implement logic to update SharedPreferences here
     });
   }
@@ -33,7 +67,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Show a dialog to enter a new profile value
   void _showAddProfileDialog(BuildContext context) {
     TextEditingController _controller = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
