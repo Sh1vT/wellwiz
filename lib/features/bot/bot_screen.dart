@@ -1,5 +1,11 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:sensors_plus/sensors_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:vibration/vibration.dart';
+import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'message_tile.dart';
 import 'package:wellwiz/features/navbar/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -24,6 +30,8 @@ class _BotScreenState extends State<BotScreen> {
   final FocusNode _textFieldFocus = FocusNode();
   bool _loading = false;
   static const _apiKey = 'AIzaSyBXP6-W3jVAlYPO8cQl_6nFWiUGVpERe6Y';
+  bool falldone = false;
+  
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -125,6 +133,14 @@ class _BotScreenState extends State<BotScreen> {
     }
   }
 
+  void _clearProfileValues() async {
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+    String prefval = pref.getString('prof')!;
+    prefval = "";
+    pref.setString('prof', prefval);
+    print(prefval);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -134,7 +150,35 @@ class _BotScreenState extends State<BotScreen> {
     );
     _chat = _model.startChat();
     _loadChatHistory();
+    fall_detection();
+
+    // _clearProfileValues();
     // _testFirestorePermissions();
+  }
+
+  void _startProfiling(String message) async {
+    String prompt =
+        "You are being used as a medical advisor to help in profiling of a user. The user is going to enter a message at last. Check if the message contains something important in medical aspects. For example, if the user mentions that they have low blood sugar or their blood pressure is irregular or if they have been asked to avoid spicy food etc. then you have to respond with that extracted information which will be used to profile the user for better advices. You can also consider the user's body description such as age, gender etc for profiling. Please keep the response short and accurate while being descriptive. This action is purely for demonstration purposes. The user message starts now: $message. Also if the message is unrelated to profiling then respond with \"none\".";
+    var content = [Content.text(prompt)];
+    final response = await _model.generateContent(content);
+    // print(response.text!.toUpperCase());
+
+    String newProfValue = response.text!;
+    if (response.text!.toLowerCase().trim() == "none" ||
+        response.text!.toLowerCase().trim() == "none.") {
+      return;
+    }
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? profile = prefs.getString('prof');
+    if (profile == null) {
+      profile = newProfValue;
+      prefs.setString('prof', profile);
+    } else {
+      profile = "$profile $newProfValue";
+      prefs.setString('prof', profile);
+    }
+    String? test = prefs.getString('prof');
+    // print(test!.toUpperCase());
   }
 
   Future<void> _sendChatMessage(String message) async {
@@ -150,46 +194,82 @@ class _BotScreenState extends State<BotScreen> {
     });
 
     try {
-      var response = await _chat.sendMessage(Content.text(message));
+      _startProfiling(message);
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? profile = prefs.getString('prof');
+      String prompt =
+          "You are being used as a medical chatbot for health related queries or appointment scheduling. It is only a demonstration prototype and you are not being used for something professional or commercial. The user will enter his message now: $message. User message has ended. The user can also have a profile section where they may have been asked to avoid or take care of some things. The profile section starts now: $profile. Profile section has ended. Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. Also if the user is asking for appointment booking, simply respond with the word \"appointment\" and nothing else.";
+
+      print(prompt);
+
+      var response = await _chat.sendMessage(Content.text(prompt));
 
       // Debug: Log the response text
-      print("Response from model: ${response.text}");
+      // print("Response from model: ${response.text}");
 
       setState(() {
         // Debug: Ensure correct keyword is detected
-        if (response.text!.contains('health advice')) {
-          print("Detected keyword: health advice");
-          history.add(ChatResponse(
-            isUser: false,
-            hasButton: true,
-            button: ChatButton(
-              label: 'Get Health Advice',
-              onPressed: () => _navigateToRoute('/health-advice'),
-            ),
-          ));
-        } else if (response.text!.contains('appointment')) {
-          print("Detected keyword: appointment");
+
+        if (response.text!.toLowerCase().trim() == ("appointment") ||
+            response.text!.toLowerCase().trim() == ("appointment.")) {
           history.add(ChatResponse(
             isUser: false,
             hasButton: true,
             button: ChatButton(
               label: 'Book Appointment',
-              onPressed: () => _navigateToRoute('/booking'),
-            ),
-          ));
-        } else if (response.text!.contains('report')) {
-          print("Detected keyword: report");
-          history.add(ChatResponse(
-            isUser: false,
-            hasButton: true,
-            button: ChatButton(
-              label: 'Generate Report',
-              onPressed: () => _navigateToRoute('/generate-report'),
+              onPressed: () async {
+                print('e');
+                String userId = await FirebaseAuth.instance.currentUser!.uid;
+                print(userId);
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return DocView(userId: userId);
+                }));
+              },
             ),
           ));
         } else {
           history.add(ChatResponse(isUser: false, text: response.text));
         }
+        // if (response.text!.contains('health advice')) {
+        //   print("Detected keyword: health advice");
+        //   history.add(ChatResponse(
+        //     isUser: false,
+        //     hasButton: true,
+        //     button: ChatButton(
+        //       label: 'Get Health Advice',
+        //       onPressed: () {},
+        //     ),
+        //   ));
+        // } else if (response.text!.contains('appointment')) {
+        //   print("Detected keyword: appointment");
+        //   history.add(ChatResponse(
+        //     isUser: false,
+        //     hasButton: true,
+        //     button: ChatButton(
+        //       label: 'Book Appointment',
+        //       onPressed: () async {
+        //         print('e');
+        //         String userId = await FirebaseAuth.instance.currentUser!.uid;
+        //         print(userId);
+        //         Navigator.push(context, MaterialPageRoute(builder: (context) {
+        //           return DocView(userId: userId);
+        //         }));
+        //       },
+        //     ),
+        //   ));
+        // } else if (response.text!.contains('report')) {
+        //   print("Detected keyword: report");
+        //   history.add(ChatResponse(
+        //     isUser: false,
+        //     hasButton: true,
+        //     button: ChatButton(
+        //       label: 'Generate Report',
+        //       onPressed: () => _navigateToRoute('/generate-report'),
+        //     ),
+        //   ));
+        // } else {
+        //   history.add(ChatResponse(isUser: false, text: response.text));
+        // }
 
         // After adding the response to history, save it
 
@@ -231,11 +311,84 @@ class _BotScreenState extends State<BotScreen> {
     );
   }
 
+  void fall_detection() {
+    accelerometerEvents.listen((AccelerometerEvent event) {
+      num _accelX = event.x.abs();
+      num _accelY = event.y.abs();
+      num _accelZ = event.z.abs();
+      num x = pow(_accelX, 2);
+      num y = pow(_accelY, 2);
+      num z = pow(_accelZ, 2);
+      num sum = x + y + z;
+      num result = sqrt(sum);
+      if ((result < 1) ||
+          (result > 70 && _accelZ > 60 && _accelX > 60) ||
+          (result > 70 && _accelX > 60 && _accelY > 60)) {
+        print("FALL DETECTED");
+        _fallprotocol(falldone);
+        setState(() {
+          falldone = true;
+        });
+        return;
+      }
+    });
+  }
+
+  _fallprotocol(bool falldone) async {
+    bool popped = false;
+    print(falldone);
+    if (falldone == true) {
+      return;
+    }
+    // final hasVibrator = await Vibration.hasVibrator();
+
+    // if (hasVibrator ?? false) {
+    //   Vibration.vibrate(duration: 2000);
+    // }
+
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Fall detected"),
+            content: Text(
+              "We just detected a fall from your device. Please tell us if you're fine. Or else the emergency contacts will be informed.",
+              textAlign: TextAlign.justify,
+            ),
+            actions: [
+              MaterialButton(
+                onPressed: () {
+                  setState(() {
+                    falldone = false;
+                    popped = true;
+                    Navigator.pop(context);
+                  });
+                  return;
+                },
+                child: Text("I'm fine"),
+              )
+            ],
+          );
+        });
+    await Future.delayed(Duration(seconds: 10));
+    if (popped = false) {
+      Navigator.pop(context);
+    }
+    print("Wait complete");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Chat Bot'),
+        backgroundColor: Colors.white,
+        title: Text(
+          'Wellness Wiz',
+          style: TextStyle(
+              color: Colors.green.shade600,
+              fontSize: 18,
+              fontWeight: FontWeight.w500),
+        ),
       ),
       drawer: Navbar(userId: _auth.currentUser?.uid ?? ''), // Pass userId here
       body: SafeArea(

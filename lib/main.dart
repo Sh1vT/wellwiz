@@ -1,11 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/firebase_options.dart';
-import 'package:wellwiz/features/appointments/doc_view.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,7 +58,7 @@ class _MyAppState extends State<MyApp> {
           ? const Center(child: CircularProgressIndicator()) // Show loader while checking authentication
           : (_user == null)
               ? const LoginScreen()
-              : BotScreen(), // Pass userId here
+              : const BotScreen(), // Pass userId here
     );
   }
 }
