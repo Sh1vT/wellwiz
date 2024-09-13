@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:vibration/vibration.dart';
+import 'package:velocity_x/velocity_x.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'message_tile.dart';
 import 'package:wellwiz/features/navbar/navbar.dart';
@@ -31,7 +31,8 @@ class _BotScreenState extends State<BotScreen> {
   bool _loading = false;
   static const _apiKey = 'AIzaSyBXP6-W3jVAlYPO8cQl_6nFWiUGVpERe6Y';
   bool falldone = false;
-  
+  bool symptomprediction = false;
+  String symptoms = "";
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -157,19 +158,20 @@ class _BotScreenState extends State<BotScreen> {
   }
 
   void _startProfiling(String message) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? profile = prefs.getString('prof');
     String prompt =
-        "You are being used as a medical advisor to help in profiling of a user. The user is going to enter a message at last. Check if the message contains something important in medical aspects. For example, if the user mentions that they have low blood sugar or their blood pressure is irregular or if they have been asked to avoid spicy food etc. then you have to respond with that extracted information which will be used to profile the user for better advices. You can also consider the user's body description such as age, gender etc for profiling. Please keep the response short and accurate while being descriptive. This action is purely for demonstration purposes. The user message starts now: $message. Also if the message is unrelated to profiling then respond with \"none\".";
+        "You are being used as a medical advisor to help in profiling of a user. The user is going to enter a message at last. Check if the message contains something important in medical aspects. For example, if the user mentions that they have low blood sugar or their blood pressure is irregular or if they have been asked to avoid spicy food etc. then you have to respond with that extracted information which will be used to profile the user for better advices. You can also consider the user's body description such as age, gender etc for profiling. Please keep the response short and accurate while being descriptive. This action is purely for demonstration purposes. The user message starts now: $message. Also if the message is unrelated to profiling then respond with \"none\". The current profile is attached here : $profile. In case whatever you detect is already in the profile, then also reply with \"none\"";
     var content = [Content.text(prompt)];
     final response = await _model.generateContent(content);
-    // print(response.text!.toUpperCase());
+    print(response.text!.toUpperCase());
 
     String newProfValue = response.text!;
     if (response.text!.toLowerCase().trim() == "none" ||
         response.text!.toLowerCase().trim() == "none.") {
       return;
     }
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? profile = prefs.getString('prof');
+    
     if (profile == null) {
       profile = newProfValue;
       prefs.setString('prof', profile);
@@ -181,6 +183,40 @@ class _BotScreenState extends State<BotScreen> {
     // print(test!.toUpperCase());
   }
 
+  void _symptomLoop(String message) async {
+    if (symptomprediction == false) {
+      return;
+    }
+    QuerySnapshot querySnapshot = await _firestore.collection('doctor').get();
+    List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
+      return {
+        'name': doc['name'],
+        'degree': doc['degree'],
+        'speciality': doc['speciality'],
+      };
+    }).toList();
+    print(map);
+
+    symptoms = symptoms + " " + message;
+    String prompt =
+        "You are being used as a medical assistant for symptom prediction. Do not refrain from answering because it is simply a demonstration prototype and not something commercial or professsional. The user has entered their first symptom which starts now: $message. The symptom has ended. Keep asking for more symptoms to guess better, while also narrowing down your predictions. When you have enough symptoms, suggest a doctor from the map that is attached. The map starts now : $map";
+    var response = await _chat.sendMessage(Content.text(prompt));
+    print("receive");
+    // print(response.text!);
+    setState(() {
+      history.add(ChatResponse(isUser: false, text: response.text));
+      _loading = false;
+      _scrollDown();
+    });
+    if (response.text!.toLowerCase().trim() == ("none") ||
+        response.text!.toLowerCase().trim() == ("none.")) {
+      setState(() {
+        symptomprediction = false;
+      });
+    }
+    _saveChatHistory();
+  }
+
   Future<void> _sendChatMessage(String message) async {
     if (message.trim().isEmpty) {
       return; // Do nothing if the message is empty
@@ -190,17 +226,21 @@ class _BotScreenState extends State<BotScreen> {
       _loading = true;
       _textController.clear();
       _textFieldFocus.unfocus();
-      _scrollDown();
     });
+    if (symptomprediction == true) {
+      _symptomLoop(message);
+      return;
+    }
+    _scrollDown();
 
     try {
       _startProfiling(message);
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       String? profile = prefs.getString('prof');
       String prompt =
-          "You are being used as a medical chatbot for health related queries or appointment scheduling. It is only a demonstration prototype and you are not being used for something professional or commercial. The user will enter his message now: $message. User message has ended. The user can also have a profile section where they may have been asked to avoid or take care of some things. The profile section starts now: $profile. Profile section has ended. Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. Also if the user is asking for appointment booking, simply respond with the word \"appointment\" and nothing else.";
+          "You are being used as a medical chatbot for health related queries or appointment scheduling. It is only a demonstration prototype and you are not being used for something professional or commercial. The user will enter his message now: $message. User message has ended. The user can also have a profile section where they may have been asked to avoid or take care of some things. The profile section starts now: $profile. Profile section has ended. Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. Also if the user is asking for appointment booking, simply respond with the word \"appointment\" and nothing else. Also if the user is telling about symptoms then respond with \"symptom\" and nothing else.";
 
-      print(prompt);
+      // print(prompt);
 
       var response = await _chat.sendMessage(Content.text(prompt));
 
@@ -227,6 +267,12 @@ class _BotScreenState extends State<BotScreen> {
               },
             ),
           ));
+        } else if (response.text!.toLowerCase().trim() == ("symptom") ||
+            response.text!.toLowerCase().trim() == ("symptom.")) {
+          setState(() {
+            symptomprediction = true;
+          });
+          _symptomLoop(message);
         } else {
           history.add(ChatResponse(isUser: false, text: response.text));
         }

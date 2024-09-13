@@ -116,7 +116,7 @@ class _ProfilePageState extends State<ProfilePage> {
             }),
         backgroundColor: Colors.green.shade400,
         title: const Text(
-          "Our Doctors",
+          "Profile",
           style: TextStyle(
               color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
         ),
