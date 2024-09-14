@@ -1,15 +1,20 @@
+import 'dart:convert';
 import 'dart:math';
 
+import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:velocity_x/velocity_x.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
+import 'package:wellwiz/features/emergency/emergency_service.dart';
 import 'message_tile.dart';
 import 'package:wellwiz/features/navbar/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // If using authentication
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BotScreen extends StatefulWidget {
   const BotScreen({super.key});
@@ -20,8 +25,7 @@ class BotScreen extends StatefulWidget {
 
 class _BotScreenState extends State<BotScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance; // For current user
-
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   List<ChatResponse> history = [];
   late final GenerativeModel _model;
   late final ChatSession _chat;
@@ -33,12 +37,14 @@ class _BotScreenState extends State<BotScreen> {
   bool falldone = false;
   bool symptomprediction = false;
   String symptoms = "";
+  List contacts = [];
+  String username = "";
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent, // Scroll to the bottom
+          _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 500),
           curve: Curves.easeOut,
         );
@@ -76,6 +82,36 @@ class _BotScreenState extends State<BotScreen> {
     } catch (e) {
       print('Failed to save chat history: $e');
       _showError('Failed to save chat history.');
+    }
+  }
+
+  Future<void> _sendEmergencyMessage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final encodedContacts = prefs.getString('contacts');
+
+    // print(encodedContacts);
+    final decodedContacts = jsonDecode(encodedContacts!) as List;
+    contacts
+        .addAll(decodedContacts.map((c) => ContactData.fromJson(c)).toList());
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.best);
+    double lat = position.latitude;
+    double lng = position.longitude;
+    for (var i = 0; i < contacts.length; i++) {
+      print(contacts[i].phone);
+      var result = await BackgroundSms.sendMessage(
+          phoneNumber: "+91${contacts[i].phone}",
+          message:
+              "I might be facing some critical medical condition. Please call an ambulance or arrive here: https://www.google.com/maps/place/$lat+$lng",
+          simSlot: 1);
+      // print(
+      //     """Need help! My location is https://www.google.com/maps/place/$lat+$lng""");
+      if (result == SmsStatus.sent) {
+        print("Sent");
+        Fluttertoast.showToast(msg: "SOS ALERT SENT TO ${contacts[i].name}");
+      } else {
+        print("Failed");
+      }
     }
   }
 
@@ -142,6 +178,24 @@ class _BotScreenState extends State<BotScreen> {
     print(prefval);
   }
 
+  void _getUserInfo() async {
+    // final GoogleSignInAccount? googleUser = GoogleSignIn().currentUser;
+    // print(googleUser?.displayName);
+    // if (googleUser == null) {
+    //   setState(() {
+    //     username = "Couldn't load";
+    //   });
+    // } else {
+    //   setState(() {
+    //     username = googleUser.displayName!;
+    //   });
+    // }
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    setState(() {
+      username = pref.getString('username')!;
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -152,6 +206,7 @@ class _BotScreenState extends State<BotScreen> {
     _chat = _model.startChat();
     _loadChatHistory();
     fall_detection();
+    _getUserInfo();
 
     // _clearProfileValues();
     // _testFirestorePermissions();
@@ -171,7 +226,7 @@ class _BotScreenState extends State<BotScreen> {
         response.text!.toLowerCase().trim() == "none.") {
       return;
     }
-    
+
     if (profile == null) {
       profile = newProfValue;
       prefs.setString('prof', profile);
@@ -187,6 +242,7 @@ class _BotScreenState extends State<BotScreen> {
     if (symptomprediction == false) {
       return;
     }
+    print("pred value : $symptomprediction");
     QuerySnapshot querySnapshot = await _firestore.collection('doctor').get();
     List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
       return {
@@ -199,21 +255,31 @@ class _BotScreenState extends State<BotScreen> {
 
     symptoms = symptoms + " " + message;
     String prompt =
-        "You are being used as a medical assistant for symptom prediction. Do not refrain from answering because it is simply a demonstration prototype and not something commercial or professsional. The user has entered their first symptom which starts now: $message. The symptom has ended. Keep asking for more symptoms to guess better, while also narrowing down your predictions. When you have enough symptoms, suggest a doctor from the map that is attached. The map starts now : $map";
+        "You are being used as a medical assistant for symptom prediction. Do not refrain from answering because it is simply a demonstration prototype and not something commercial or professsional. The user has entered their first symptom which starts now: $message. The symptom has ended. Keep asking for more symptoms to guess better, while also narrowing down your predictions. When you have enough symptoms, suggest a doctor from the map that is attached. The map starts now : $map. If you have suggested a doctor, reply with the last sentence as \"Done.\"";
     var response = await _chat.sendMessage(Content.text(prompt));
     print("receive");
+    print(response.text!);
     // print(response.text!);
+    if (response.text!.toLowerCase().trim().contains("done")) {
+      String text = response.text!;
+      List<String> lines = text.split('\n');
+      List<String> newLines = lines.sublist(0, lines.length - 2);
+      String modifiedText = newLines.join('\n');
+      setState(() {
+        history.add(ChatResponse(isUser: false, text: modifiedText));
+        symptomprediction = false;
+        print(symptomprediction);
+        _loading = false;
+        _scrollDown();
+        _saveChatHistory();
+      });
+      return;
+    }
     setState(() {
       history.add(ChatResponse(isUser: false, text: response.text));
       _loading = false;
       _scrollDown();
     });
-    if (response.text!.toLowerCase().trim() == ("none") ||
-        response.text!.toLowerCase().trim() == ("none.")) {
-      setState(() {
-        symptomprediction = false;
-      });
-    }
     _saveChatHistory();
   }
 
@@ -386,12 +452,6 @@ class _BotScreenState extends State<BotScreen> {
     if (falldone == true) {
       return;
     }
-    // final hasVibrator = await Vibration.hasVibrator();
-
-    // if (hasVibrator ?? false) {
-    //   Vibration.vibrate(duration: 2000);
-    // }
-
     showDialog(
         context: context,
         builder: (context) {
@@ -417,7 +477,46 @@ class _BotScreenState extends State<BotScreen> {
           );
         });
     await Future.delayed(Duration(seconds: 10));
-    if (popped = false) {
+    print("poppedvalue : $popped");
+    if (popped == false) {
+      _sendEmergencyMessage();
+      print("didnt respond");
+      Navigator.pop(context);
+    }
+    print("Wait complete");
+  }
+
+  _sosprotocol() async {
+    bool popped = false;
+    showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Are you okay?"),
+            content: Text(
+              "You just pressed the SOS button. This button is used to trigger emergency. Please tell us if you're fine. Or else the emergency contacts will be informed.",
+              textAlign: TextAlign.justify,
+            ),
+            actions: [
+              MaterialButton(
+                onPressed: () {
+                  setState(() {
+                    falldone = false;
+                    popped = true;
+                    Navigator.pop(context);
+                  });
+                  return;
+                },
+                child: Text("I'm fine"),
+              )
+            ],
+          );
+        });
+    await Future.delayed(Duration(seconds: 10));
+    print("poppedvalue : $popped");
+    if (popped == false) {
+      _sendEmergencyMessage();
+      print("didnt respond");
       Navigator.pop(context);
     }
     print("Wait complete");
@@ -427,6 +526,13 @@ class _BotScreenState extends State<BotScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          MaterialButton(
+              onPressed: () {
+                _sosprotocol();
+              },
+              child: Icon(Icons.sos_rounded))
+        ],
         backgroundColor: Colors.white,
         title: Text(
           'Wellness Wiz',
@@ -436,7 +542,10 @@ class _BotScreenState extends State<BotScreen> {
               fontWeight: FontWeight.w500),
         ),
       ),
-      drawer: Navbar(userId: _auth.currentUser?.uid ?? ''), // Pass userId here
+      drawer: Navbar(
+        userId: _auth.currentUser?.uid ?? '',
+        username: username,
+      ), // Pass userId here
       body: SafeArea(
         child: Stack(
           children: [
@@ -498,7 +607,7 @@ class _BotScreenState extends State<BotScreen> {
                         child: TextField(
                           cursorColor: Colors.green.shade400,
                           controller: _textController,
-                          autofocus: true,
+                          autofocus: false,
                           focusNode: _textFieldFocus,
                           decoration: InputDecoration(
                             hintText: 'Ask me anything...',

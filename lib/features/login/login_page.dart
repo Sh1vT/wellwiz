@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -29,6 +30,9 @@ class LoginScreen extends StatelessWidget {
       final userCredential =
           await FirebaseAuth.instance.signInWithCredential(credential);
       print("User signed in successfully: ${userCredential.user?.displayName}");
+
+      SharedPreferences pref = await SharedPreferences.getInstance();
+      pref.setString('username', googleUser.displayName!);
 
       Navigator.pushReplacement(
         context,
