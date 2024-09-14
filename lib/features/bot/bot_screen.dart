@@ -7,8 +7,11 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/emergency/emergency_service.dart';
 import 'message_tile.dart';
@@ -39,6 +42,9 @@ class _BotScreenState extends State<BotScreen> {
   String symptoms = "";
   List contacts = [];
   String username = "";
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _lastWords = '';
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -207,7 +213,7 @@ class _BotScreenState extends State<BotScreen> {
     _loadChatHistory();
     fall_detection();
     _getUserInfo();
-
+    _initSpeech();
     // _clearProfileValues();
     // _testFirestorePermissions();
   }
@@ -522,6 +528,11 @@ class _BotScreenState extends State<BotScreen> {
     print("Wait complete");
   }
 
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -610,7 +621,7 @@ class _BotScreenState extends State<BotScreen> {
                           autofocus: false,
                           focusNode: _textFieldFocus,
                           decoration: InputDecoration(
-                            hintText: 'Ask me anything...',
+                            hintText: 'What is troubling you...',
                             hintStyle: const TextStyle(color: Colors.grey),
                             filled: true,
                             fillColor: Colors.grey.shade200,
@@ -626,15 +637,42 @@ class _BotScreenState extends State<BotScreen> {
                     ),
                     const SizedBox(width: 10),
                     GestureDetector(
+                      onLongPressEnd: (details) {
+                        if (_speechToText.isListening) {
+                          _speechToText.stop();
+                          setState(() {});
+                        }
+                      },
+                      onLongPress: () async {
+                        await Permission.microphone.request();
+                        await Permission.speech.request();
+
+                        if (_speechEnabled) {
+                          setState(() {
+                            _speechToText.listen(onResult: (result) {
+                              _textController.text = result.recognizedWords;
+                              print(result.recognizedWords);
+                            });
+                          });
+                        }
+                      },
                       onTap: () {
-                        final message = _textController.text
-                            .trim(); // Trim leading/trailing spaces
+                        final message = _textController.text.trim();
+
                         if (message.isNotEmpty) {
                           setState(() {
                             history
                                 .add(ChatResponse(isUser: true, text: message));
+                            _loading =
+                                true; // Show loading indicator when sending the message
                           });
-                          _sendChatMessage(message);
+
+                          _sendChatMessage(message).then((_) {
+                            setState(() {
+                              _loading =
+                                  false; // Hide loading indicator after sending
+                            });
+                          });
                         }
                       },
                       child: Container(
@@ -654,18 +692,17 @@ class _BotScreenState extends State<BotScreen> {
                           ],
                         ),
                         child: _loading
-                            ? const Padding(
-                                padding: EdgeInsets.all(15.0),
-                                child: CircularProgressIndicator.adaptive(
+                            ? Padding(
+                              padding: EdgeInsets.all(15),
+                              child: const CircularProgressIndicator.adaptive(
                                   backgroundColor: Colors.white,
                                 ),
-                              )
-                            : const Icon(
-                                Icons.send_rounded,
-                                color: Colors.white,
-                              ),
+                            )
+                            : _textController.text.isEmpty
+                                ? const Icon(Icons.mic, color: Colors.white)
+                                : const Icon(Icons.send, color: Colors.white),
                       ),
-                    ),
+                    )
                   ],
                 ),
               ),
