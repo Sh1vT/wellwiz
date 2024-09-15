@@ -249,13 +249,26 @@ class Navbar extends StatelessWidget {
                   const SizedBox(
                     width: 12,
                   ),
-                  const Text(
-                    'WellWiz',
-                    style: TextStyle(
-                        fontFamily: 'Mulish',
-                        color: Color.fromRGBO(161, 188, 117, 1),
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Well",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Mulish',
+                            fontSize: 40,
+                            color: Color.fromRGBO(180, 207, 126, 1)),
+                      ),
+                      Text(
+                        "Wiz",
+                        style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontFamily: 'Mulish',
+                            fontSize: 40,
+                            color: Colors.grey.shade700),
+                      ),
+                    ],
                   ),
                 ],
               ),

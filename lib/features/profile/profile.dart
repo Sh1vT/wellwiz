@@ -12,6 +12,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   // Map to store profile values along with their date and time
   Map<String, String> profileMap = {};
+  bool emptyNow = false;
 
   @override
   void initState() {
@@ -23,9 +24,14 @@ class _ProfilePageState extends State<ProfilePage> {
   void _populateProfile() async {
     final pref = await SharedPreferences.getInstance();
     String prefval = pref.getString('prof') ?? "";
-    if (prefval.isEmpty) {
+    print("prefval $prefval");
+    if (prefval.isEmpty || prefval=="{}") {
+      setState(() {
+        emptyNow = true;
+      });
       return;
     }
+    print(prefval);
 
     // Decode the JSON string into a map
     setState(() {
@@ -53,7 +59,8 @@ class _ProfilePageState extends State<ProfilePage> {
     final pref = await SharedPreferences.getInstance();
 
     // Get the current date and time for uniqueness
-    String currentDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    String currentDateTime =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
     // Add the new profile value with the current date and time as the key
     setState(() {
@@ -90,6 +97,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 if (_controller.text.isNotEmpty) {
                   _addProfileValue(_controller.text);
                 }
+                setState(() {
+                  emptyNow=false;
+                });
                 Navigator.of(context).pop();
               },
               child: const Text('Add'),
@@ -103,7 +113,6 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
       appBar: AppBar(
         leading: CupertinoButton(
             child: const Icon(
@@ -118,69 +127,91 @@ class _ProfilePageState extends State<ProfilePage> {
         title: const Text(
           "Profile",
           style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Mulish'),
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Mulish'),
         ),
         centerTitle: true,
       ),
-      body: ListView.builder(
-        itemCount: profileMap.length,
-        itemBuilder: (context, index) {
-          String key = profileMap.keys.elementAt(index);
-          String value = profileMap[key]!;
-
-          // Extract the date part from the key
-          String datePart = key.split(' ')[0];
-
-          return Padding(
-            padding: EdgeInsets.all(16),
-            child: Container(
+      body: emptyNow
+          ? Container(
+              margin: const EdgeInsets.all(16),
+              height: 60,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                    color: Color.fromARGB(255, 42, 119, 72), width: 2),
+                color: Colors.green.shade100,
               ),
-              padding: EdgeInsets.all(8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: const Center(
+                child: Text(
+                  'Add something about yourself!',
+                  style: TextStyle(fontFamily: 'Mulish'),
+                ),
+              ),
+            )
+          : ListView.builder(
+              itemCount: profileMap.length,
+              itemBuilder: (context, index) {
+                String key = profileMap.keys.elementAt(index);
+                String value = profileMap[key]!;
+
+                // Extract the date part from the key
+                String datePart = key.split(' ')[0];
+
+                return Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: Color.fromARGB(255, 42, 119, 72), width: 2),
+                    ),
+                    padding: EdgeInsets.all(8),
+                    child: Row(
                       children: [
-                        Text(
-                          "Created on : $datePart", // Display only the date
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 42, 119, 72),
-                            fontFamily: 'Mulish',
-                            fontSize: 12,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Created on : $datePart", // Display only the date
+                                style: TextStyle(
+                                  color: Color.fromARGB(255, 42, 119, 72),
+                                  fontFamily: 'Mulish',
+                                  fontSize: 12,
+                                ),
+                              ),
+                              Text(
+                                value, // Display the profile value
+                                style: TextStyle(
+                                  fontFamily: 'Mulish',
+                                  fontSize: 16,
+                                ),
+                                maxLines: null,
+                                overflow: TextOverflow.visible,
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          value, // Display the profile value
-                          style: TextStyle(
-                            fontFamily: 'Mulish',
-                            fontSize: 16,
-                          ),
-                          maxLines: null,
-                          overflow: TextOverflow.visible,
-                        ),
+                        IconButton(
+                            onPressed: () {
+                              _deleteProfileValue(key);
+                              setState(() {
+                                _populateProfile();
+                              });
+                            },
+                            icon: Icon(Icons.delete,
+                                color: Colors.yellow.shade700)),
                       ],
                     ),
                   ),
-                  IconButton(
-                      onPressed: () {
-                        _deleteProfileValue(key);
-                      },
-                      icon: Icon(Icons.delete, color: Colors.yellow.shade700)),
-                ],
-              ),
+                );
+              },
             ),
-          );
-        },
-      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddProfileDialog(context),
         backgroundColor: Colors.green.shade400,
-        child: const Icon(Icons.add),
+        child: const Icon(Icons.add, color: Colors.white,),
       ),
     );
   }
