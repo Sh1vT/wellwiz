@@ -2,27 +2,30 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/appointments/app_page.dart'; // Import the UserAppointmentsPage
 import 'doc_tile.dart'; // Update with the correct path to doc_tile.dart
 
 class DocView extends StatelessWidget {
   final String userId; // Add a field for userId
 
-  const DocView(
-      {super.key, required this.userId}); // Pass userId in the constructor
+  const DocView({super.key, required this.userId}); // Pass userId in the constructor
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: CupertinoButton(
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 18,
+          ),
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) {
+              return const BotScreen();
+            }));
+          },
+        ),
         backgroundColor: Colors.green.shade400,
         title: const Text(
           "Our Doctors",
@@ -30,6 +33,16 @@ class DocView extends StatelessWidget {
               color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600, fontFamily: 'Mulish'),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today_outlined, color: Colors.white),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) {
+                return UserAppointmentsPage(userId: userId); // Pass userId to UserAppointmentsPage
+              }));
+            },
+          ),
+        ],
       ),
       
       body: Column(
@@ -37,8 +50,7 @@ class DocView extends StatelessWidget {
         children: [
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance.collection('doctor').snapshots(),
+              stream: FirebaseFirestore.instance.collection('doctor').snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
