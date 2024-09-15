@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'dart:convert'; // To use JSON encoding/decoding
+import 'package:intl/intl.dart'; // To format dates and times
 
 class ProfilePage extends StatefulWidget {
   @override
@@ -9,59 +10,59 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Sample list of profile values, replace with actual values from SharedPreferences later
-  List<String> profileValues = [];
+  // Map to store profile values along with their date and time
+  Map<String, String> profileMap = {};
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _populateProfile();
   }
 
+  // Fetch profile from SharedPreferences
   void _populateProfile() async {
     final pref = await SharedPreferences.getInstance();
     String prefval = pref.getString('prof') ?? "";
-    if (prefval == "") {
+    if (prefval.isEmpty) {
       return;
     }
 
+    // Decode the JSON string into a map
     setState(() {
-      profileValues = prefval.split(RegExp(r'[.\n]'));
-      profileValues = profileValues
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty)
-          .toList();
+      profileMap = Map<String, String>.from(jsonDecode(prefval));
     });
-    print(profileValues);
+    print(profileMap);
   }
 
   // Method to delete an entry
-  void _deleteProfileValue(int index) async {
+  void _deleteProfileValue(String key) async {
     final pref = await SharedPreferences.getInstance();
-    String prefval = pref.getString('prof')!;
-    profileValues.removeAt(index);
-    prefval=profileValues.join('.\n');
-    pref.setString('prof',prefval);
-    
-    setState(() {
-      // profileValues.removeAt(index);
 
-      // Implement logic to update SharedPreferences here
+    // Remove the entry from the map
+    setState(() {
+      profileMap.remove(key);
     });
+
+    // Encode the updated map and save it back to SharedPreferences
+    String updatedProfile = jsonEncode(profileMap);
+    pref.setString('prof', updatedProfile);
   }
 
   // Method to add a new profile value
   void _addProfileValue(String newValue) async {
-    profileValues.add(newValue);
     final pref = await SharedPreferences.getInstance();
-    String prefval = pref.getString('prof')!;
-    String updatedval=prefval+".\n$newValue.\n";
-    pref.setString('prof', updatedval);
-    print(updatedval);
+
+    // Get the current date and time for uniqueness
+    String currentDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+
+    // Add the new profile value with the current date and time as the key
     setState(() {
-      // Implement logic to update SharedPreferences here
+      profileMap[currentDateTime] = newValue;
     });
+
+    // Encode the map to JSON and save it
+    String updatedProfile = jsonEncode(profileMap);
+    pref.setString('prof', updatedProfile);
   }
 
   // Show a dialog to enter a new profile value
@@ -80,7 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.pop(context);
               },
               child: const Text('Cancel'),
             ),
@@ -102,6 +103,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      
       appBar: AppBar(
         leading: CupertinoButton(
             child: const Icon(
@@ -110,36 +112,71 @@ class _ProfilePageState extends State<ProfilePage> {
               size: 18,
             ),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return const BotScreen();
-              }));
+              Navigator.pop(context);
             }),
         backgroundColor: Colors.green.shade400,
         title: const Text(
           "Profile",
           style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Mulish'),
         ),
         centerTitle: true,
       ),
       body: ListView.builder(
-        itemCount: profileValues.length,
+        itemCount: profileMap.length,
         itemBuilder: (context, index) {
-          return Card(
-            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-            child: ListTile(
-              title: Text(profileValues[index]),
-              trailing: IconButton(
-                icon: const Icon(Icons.delete),
-                onPressed: () {
-                  _deleteProfileValue(index);
-                },
+          String key = profileMap.keys.elementAt(index);
+          String value = profileMap[key]!;
+
+          // Extract the date part from the key
+          String datePart = key.split(' ')[0];
+
+          return Padding(
+            padding: EdgeInsets.all(16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                    color: Color.fromARGB(255, 42, 119, 72), width: 2),
+              ),
+              padding: EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "Created on : $datePart", // Display only the date
+                          style: TextStyle(
+                            color: Color.fromARGB(255, 42, 119, 72),
+                            fontFamily: 'Mulish',
+                            fontSize: 12,
+                          ),
+                        ),
+                        Text(
+                          value, // Display the profile value
+                          style: TextStyle(
+                            fontFamily: 'Mulish',
+                            fontSize: 16,
+                          ),
+                          maxLines: null,
+                          overflow: TextOverflow.visible,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                      onPressed: () {
+                        _deleteProfileValue(key);
+                      },
+                      icon: Icon(Icons.delete, color: Colors.yellow.shade700)),
+                ],
               ),
             ),
           );
         },
       ),
-      // Floating Action Button to add new profile values
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddProfileDialog(context),
         backgroundColor: Colors.green.shade400,

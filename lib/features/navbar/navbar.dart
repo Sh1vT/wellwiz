@@ -10,8 +10,13 @@ import 'package:wellwiz/features/profile/profile.dart';
 class Navbar extends StatelessWidget {
   final String userId;
   final String username;
+  final String userimg;
 
-  const Navbar({Key? key, required this.userId, required this.username})
+  const Navbar(
+      {Key? key,
+      required this.userId,
+      required this.username,
+      required this.userimg})
       : super(key: key);
 
   @override
@@ -34,12 +39,14 @@ class Navbar extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        Icons.person_outline_rounded,
-                        size: 45,
-                        color: Color.fromARGB(255, 42, 119, 72),
-                        weight: 1,
+                      SizedBox(
+                        height: 45,
+                        width: 45,
+                        child: ClipOval(
+                          child: Image.network(userimg),
+                        ),
                       ),
+                      SizedBox(height: 4),
                       Container(
                           padding: EdgeInsets.symmetric(horizontal: 3),
                           decoration: BoxDecoration(
@@ -57,6 +64,7 @@ class Navbar extends StatelessWidget {
                           child: Text(
                             username,
                             style: TextStyle(
+                                fontFamily: 'Mulish',
                                 color: Color.fromARGB(255, 42, 119, 72),
                                 fontWeight: FontWeight.w600),
                           )),
@@ -64,6 +72,35 @@ class Navbar extends StatelessWidget {
                   ),
                 )
               ],
+            ),
+            ListTile(
+              minTileHeight: 60,
+              leading: Icon(
+                Icons.cyclone_rounded,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              trailing: Icon(
+                Icons.arrow_right_rounded,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              title: Text(
+                'Wizard',
+                style: TextStyle(
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Divider(
+                height: 0,
+              ),
             ),
             ListTile(
               minTileHeight: 60,
@@ -80,10 +117,13 @@ class Navbar extends StatelessWidget {
               title: Text(
                 'Profile',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green.shade600),
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
               ),
               onTap: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
                   return ProfilePage();
                 }));
               },
@@ -109,10 +149,12 @@ class Navbar extends StatelessWidget {
               title: Text(
                 'Appointment',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green.shade600),
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
               ),
               onTap: () {
-                Navigator.of(context).pushReplacement(
+                Navigator.of(context).push(
                   MaterialPageRoute(
                       builder: (context) => DocView(userId: userId)),
                 );
@@ -139,7 +181,9 @@ class Navbar extends StatelessWidget {
               title: Text(
                 'Emergency',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green.shade600),
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
               ),
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -168,11 +212,14 @@ class Navbar extends StatelessWidget {
               title: Text(
                 'Logout',
                 style: TextStyle(
-                    fontWeight: FontWeight.bold, color: Colors.green.shade600),
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
               ),
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
                   return LoginScreen();
                 }));
               },
@@ -205,11 +252,11 @@ class Navbar extends StatelessWidget {
                   const Text(
                     'WellWiz',
                     style: TextStyle(
-                        // fontFamily: 'Calibri',
+                        fontFamily: 'Mulish',
                         color: Color.fromRGBO(161, 188, 117, 1),
                         fontSize: 32,
-                        fontWeight: FontWeight.w700),
-                  )
+                        fontWeight: FontWeight.bold),
+                  ),
                 ],
               ),
             )

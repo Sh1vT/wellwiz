@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/login/sign_in_button.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -33,6 +34,7 @@ class LoginScreen extends StatelessWidget {
 
       SharedPreferences pref = await SharedPreferences.getInstance();
       pref.setString('username', googleUser.displayName!);
+      pref.setString('userimg', googleUser.photoUrl!);
 
       Navigator.pushReplacement(
         context,
@@ -46,10 +48,93 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ElevatedButton(
-          child: const Text("Sign-in with Google"),
-          onPressed: () => _signInWithGoogle(context),
+      body: SafeArea(
+        child: Container(
+          clipBehavior: Clip.hardEdge,
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Color.fromRGBO(161, 188, 117, 1),
+              width: 10.0,
+            ),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Spacer(),
+                Container(
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/logo.jpeg',
+                      height: 100,
+                      width: 100,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Well",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 40,
+                          color: Color.fromRGBO(180, 207, 126, 1)),
+                    ),
+                    Text(
+                      "Wiz",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 40,
+                          color: Colors.grey.shade700),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SignInButton(
+                  buttontext: ("Sign In"),
+                  iconImage: const AssetImage('assets/images/googlelogo.png'),
+                  onPressed: () {
+                    // TODO: Implement Google Sign-In and remove Navigator.push in favor of StreamBuilder in SplashScreen
+                    _signInWithGoogle(context);
+                    // Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(
+                    //         builder: (context) => const GlobalScaffold()));
+                  },
+                ),
+                Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Made with ",
+                      style: TextStyle(
+                        fontFamily: 'Mulish',
+                        color: Color.fromRGBO(64, 52, 52, 1),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Icon(Icons.favorite, color: Colors.green.shade600,),
+                    Text(
+                      " by Can-do Crew",
+                      style: TextStyle(
+                        fontFamily: 'Mulish',
+                        color: Color.fromRGBO(64, 52, 52, 1),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 4,)
+              ],
+            ),
+          ),
         ),
       ),
     );

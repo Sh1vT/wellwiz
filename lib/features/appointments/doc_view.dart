@@ -21,18 +21,17 @@ class DocView extends StatelessWidget {
               size: 18,
             ),
             onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return const BotScreen();
-              }));
+              Navigator.pop(context);
             }),
         backgroundColor: Colors.green.shade400,
         title: const Text(
           "Our Doctors",
           style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600, fontFamily: 'Mulish'),
         ),
         centerTitle: true,
       ),
+      
       body: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -55,7 +54,15 @@ class DocView extends StatelessWidget {
                       doc.id, data); // Pass the document ID
                 }).toList();
 
-                return ListView.builder(
+                return GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2, // 2 tiles per row
+                    mainAxisSpacing: 8, // Spacing between rows
+                    crossAxisSpacing: 8, // Spacing between columns
+                    childAspectRatio:
+                        0.75, // Aspect ratio for tiles (width/height)
+                  ),
+                  padding: const EdgeInsets.all(16),
                   itemCount: doctors.length,
                   itemBuilder: (context, index) {
                     final doctor = doctors[index];

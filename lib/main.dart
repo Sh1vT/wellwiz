@@ -32,7 +32,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> initialiseUser() async {
-    // await GoogleSignIn().signOut();
     try {
       final user = FirebaseAuth.instance.currentUser;
       setState(() {
@@ -43,24 +42,23 @@ class _MyAppState extends State<MyApp> {
       setState(() {
         _isLoading = false;
       });
-      // Handle error
     }
   }
 
   @override
   Widget build(BuildContext context) { 
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'WellWiz',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
       
       home: _isLoading
-          ? const Center(child: CircularProgressIndicator()) // Show loader while checking authentication
+          ? const Center(child: CircularProgressIndicator())
           : (_user == null)
               ? const LoginScreen()
-              : const BotScreen(), // Pass userId here
+              : const BotScreen(),
     );
   }
 }

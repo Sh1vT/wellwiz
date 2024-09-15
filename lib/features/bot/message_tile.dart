@@ -20,7 +20,7 @@ class MessageTile extends StatelessWidget {
           sendByMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(
-          sendByMe ? 'You' : 'WellWiz',
+          sendByMe ? 'You' : 'Wizard',
           style: const TextStyle(fontSize: 11.5, color: Colors.grey),
         ),
         const SizedBox(

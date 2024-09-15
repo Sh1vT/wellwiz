@@ -1,17 +1,20 @@
 import 'dart:convert';
 import 'dart:math';
-
 import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/emergency/emergency_service.dart';
 import 'message_tile.dart';
@@ -42,6 +45,7 @@ class _BotScreenState extends State<BotScreen> {
   String symptoms = "";
   List contacts = [];
   String username = "";
+  String userimg = "";
   final SpeechToText _speechToText = SpeechToText();
   bool _speechEnabled = false;
   String _lastWords = '';
@@ -108,7 +112,7 @@ class _BotScreenState extends State<BotScreen> {
       var result = await BackgroundSms.sendMessage(
           phoneNumber: "+91${contacts[i].phone}",
           message:
-              "I might be facing some critical medical condition. Please call an ambulance or arrive here: https://www.google.com/maps/place/$lat+$lng",
+              "I am facing some critical medical condition. Please call an ambulance or arrive here: https://www.google.com/maps/place/$lat+$lng",
           simSlot: 1);
       // print(
       //     """Need help! My location is https://www.google.com/maps/place/$lat+$lng""");
@@ -118,6 +122,7 @@ class _BotScreenState extends State<BotScreen> {
       } else {
         print("Failed");
       }
+      launchUrl(Uri.parse("tel:108"));
     }
   }
 
@@ -185,20 +190,10 @@ class _BotScreenState extends State<BotScreen> {
   }
 
   void _getUserInfo() async {
-    // final GoogleSignInAccount? googleUser = GoogleSignIn().currentUser;
-    // print(googleUser?.displayName);
-    // if (googleUser == null) {
-    //   setState(() {
-    //     username = "Couldn't load";
-    //   });
-    // } else {
-    //   setState(() {
-    //     username = googleUser.displayName!;
-    //   });
-    // }
     SharedPreferences pref = await SharedPreferences.getInstance();
     setState(() {
       username = pref.getString('username')!;
+      userimg = pref.getString('userimg')!;
     });
   }
 
@@ -220,34 +215,45 @@ class _BotScreenState extends State<BotScreen> {
 
   void _startProfiling(String message) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? profile = prefs.getString('prof');
+    String? profileJson = prefs.getString('prof');
+    Map<String, String> profileMap = {};
+
+    if (profileJson != null) {
+      profileMap = Map<String, String>.from(jsonDecode(profileJson));
+    }
+    // String prompt2 =
+    //     "You are being used as a medical advisor to help in profiling of a user. The user is going to enter a message at last. Check if the message contains something important in medical aspects i.e.something that would help any doctor or you as an advisor, to give more relevant and personalized information to the user. For example, if the user mentions that they have low blood sugar or their blood pressure is irregular or if they have been asked to avoid spicy food etc. then you have to respond with that extracted information which will be used to profile the user for better advices. You can extract information when user mentions it was said by a doctor. You can also consider the user's body description such as age, gender, physical condition, chemical levels etc for profiling. Please keep the response short and accurate while being descriptive. This action is purely for demonstration purposes. The user message starts now: $message. Also if the message is unrelated to profiling then respond with \"none\". The current profile is attached here : $profileJson. In case whatever you detect is already in the profile, then also reply with \"none\"";
     String prompt =
-        "You are being used as a medical advisor to help in profiling of a user. The user is going to enter a message at last. Check if the message contains something important in medical aspects. For example, if the user mentions that they have low blood sugar or their blood pressure is irregular or if they have been asked to avoid spicy food etc. then you have to respond with that extracted information which will be used to profile the user for better advices. You can also consider the user's body description such as age, gender etc for profiling. Please keep the response short and accurate while being descriptive. This action is purely for demonstration purposes. The user message starts now: $message. Also if the message is unrelated to profiling then respond with \"none\". The current profile is attached here : $profile. In case whatever you detect is already in the profile, then also reply with \"none\"";
+        """You are being used as a profiler for creating a medical profile of a user.
+        This profile must consist everything that is important in terms of a medical enquiry.
+        For example, it could contain information imposed on user by doctor, such as dietary restrictions, physical restrictions, dietary preferences, exercise preferences, calorie intake, or anything that a doctor would tell a patient for better and steady recovery. It could also contain patients hormone or body fluids being low or high.
+        Check if this message by user contains any such information or not : $message.
+        The current profile is stored as a json map as follows: $profileMap.
+        If any profilable information is found, then return it as a short yet descriptive statement without formatting or quotes, similar to something like : I have low RBC count. or : I am not allowed to eat root vegetables.
+        If whatever that is said in the message already exists in the profile map that was attached then respond with a plain text of "none" without any formatting and nothing else.
+        If the message is unrelated to profiling then also respond with a plain text of "none" without any formatting and nothing else.
+    """;
     var content = [Content.text(prompt)];
     final response = await _model.generateContent(content);
-    print(response.text!.toUpperCase());
-
     String newProfValue = response.text!;
-    if (response.text!.toLowerCase().trim() == "none" ||
-        response.text!.toLowerCase().trim() == "none.") {
+    print(newProfValue.toUpperCase());
+    if (newProfValue.toLowerCase().trim() == "none" ||
+        newProfValue.toLowerCase().trim() == "none.") {
       return;
     }
-
-    if (profile == null) {
-      profile = newProfValue;
-      prefs.setString('prof', profile);
-    } else {
-      profile = "$profile $newProfValue";
-      prefs.setString('prof', profile);
-    }
-    String? test = prefs.getString('prof');
-    // print(test!.toUpperCase());
+    String currentDate =
+        DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
+    profileMap[currentDate] = newProfValue;
+    profileJson = jsonEncode(profileMap);
+    prefs.setString('prof', profileJson);
+    print(profileMap);
   }
 
   void _symptomLoop(String message) async {
     if (symptomprediction == false) {
       return;
     }
+    print("symptomloop function");
     print("pred value : $symptomprediction");
     QuerySnapshot querySnapshot = await _firestore.collection('doctor').get();
     List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
@@ -304,6 +310,7 @@ class _BotScreenState extends State<BotScreen> {
       return;
     }
     _scrollDown();
+    print("sendchatmessage function");
 
     try {
       _startProfiling(message);
@@ -311,17 +318,10 @@ class _BotScreenState extends State<BotScreen> {
       String? profile = prefs.getString('prof');
       String prompt =
           "You are being used as a medical chatbot for health related queries or appointment scheduling. It is only a demonstration prototype and you are not being used for something professional or commercial. The user will enter his message now: $message. User message has ended. The user can also have a profile section where they may have been asked to avoid or take care of some things. The profile section starts now: $profile. Profile section has ended. Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. Also if the user is asking for appointment booking, simply respond with the word \"appointment\" and nothing else. Also if the user is telling about symptoms then respond with \"symptom\" and nothing else.";
-
-      // print(prompt);
-
       var response = await _chat.sendMessage(Content.text(prompt));
-
-      // Debug: Log the response text
       // print("Response from model: ${response.text}");
 
       setState(() {
-        // Debug: Ensure correct keyword is detected
-
         if (response.text!.toLowerCase().trim() == ("appointment") ||
             response.text!.toLowerCase().trim() == ("appointment.")) {
           history.add(ChatResponse(
@@ -348,49 +348,6 @@ class _BotScreenState extends State<BotScreen> {
         } else {
           history.add(ChatResponse(isUser: false, text: response.text));
         }
-        // if (response.text!.contains('health advice')) {
-        //   print("Detected keyword: health advice");
-        //   history.add(ChatResponse(
-        //     isUser: false,
-        //     hasButton: true,
-        //     button: ChatButton(
-        //       label: 'Get Health Advice',
-        //       onPressed: () {},
-        //     ),
-        //   ));
-        // } else if (response.text!.contains('appointment')) {
-        //   print("Detected keyword: appointment");
-        //   history.add(ChatResponse(
-        //     isUser: false,
-        //     hasButton: true,
-        //     button: ChatButton(
-        //       label: 'Book Appointment',
-        //       onPressed: () async {
-        //         print('e');
-        //         String userId = await FirebaseAuth.instance.currentUser!.uid;
-        //         print(userId);
-        //         Navigator.push(context, MaterialPageRoute(builder: (context) {
-        //           return DocView(userId: userId);
-        //         }));
-        //       },
-        //     ),
-        //   ));
-        // } else if (response.text!.contains('report')) {
-        //   print("Detected keyword: report");
-        //   history.add(ChatResponse(
-        //     isUser: false,
-        //     hasButton: true,
-        //     button: ChatButton(
-        //       label: 'Generate Report',
-        //       onPressed: () => _navigateToRoute('/generate-report'),
-        //     ),
-        //   ));
-        // } else {
-        //   history.add(ChatResponse(isUser: false, text: response.text));
-        // }
-
-        // After adding the response to history, save it
-
         _loading = false;
       });
       _saveChatHistory();
@@ -412,7 +369,10 @@ class _BotScreenState extends State<BotScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Something went wrong'),
+          title: const Text(
+            'Something went wrong',
+            style: TextStyle(fontFamily: 'Mulish'),
+          ),
           content: SingleChildScrollView(
             child: SelectableText(message),
           ),
@@ -421,7 +381,10 @@ class _BotScreenState extends State<BotScreen> {
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('OK'),
+              child: const Text(
+                'OK',
+                style: TextStyle(fontFamily: 'Mulish'),
+              ),
             ),
           ],
         );
@@ -443,41 +406,53 @@ class _BotScreenState extends State<BotScreen> {
           (result > 70 && _accelZ > 60 && _accelX > 60) ||
           (result > 70 && _accelX > 60 && _accelY > 60)) {
         print("FALL DETECTED");
-        _fallprotocol(falldone);
-        setState(() {
-          falldone = true;
-        });
+        print(falldone);
+        if (falldone == false) {
+          _fallprotocol();
+        }
         return;
       }
     });
   }
 
-  _fallprotocol(bool falldone) async {
+  _fallprotocol() async {
+    setState(() {
+      falldone=true;
+    });
     bool popped = false;
     print(falldone);
-    if (falldone == true) {
-      return;
-    }
     showDialog(
         context: context,
         builder: (context) {
           return AlertDialog(
-            title: Text("Fall detected"),
+            title: Text(
+              "Fall detected",
+              style: TextStyle(fontFamily: 'Mulish'),
+            ),
             content: Text(
               "We just detected a fall from your device. Please tell us if you're fine. Or else the emergency contacts will be informed.",
+              style: TextStyle(fontFamily: 'Mulish'),
               textAlign: TextAlign.justify,
             ),
             actions: [
               MaterialButton(
                 onPressed: () {
+                  falldone=false;
                   setState(() {
                     falldone = false;
                     popped = true;
                     Navigator.pop(context);
                   });
+                  print("falldone val $falldone");
                   return;
                 },
-                child: Text("I'm fine"),
+                child: Text(
+                  "I'm fine",
+                  style: TextStyle(
+                      fontFamily: 'Mulish',
+                      color: Colors.green.shade600,
+                      fontWeight: FontWeight.bold),
+                ),
               )
             ],
           );
@@ -487,6 +462,9 @@ class _BotScreenState extends State<BotScreen> {
     if (popped == false) {
       _sendEmergencyMessage();
       print("didnt respond");
+      setState(() {
+        falldone=false;
+      });
       Navigator.pop(context);
     }
     print("Wait complete");
@@ -546,16 +524,18 @@ class _BotScreenState extends State<BotScreen> {
         ],
         backgroundColor: Colors.white,
         title: Text(
-          'Wellness Wiz',
+          'Wizard',
           style: TextStyle(
               color: Colors.green.shade600,
               fontSize: 18,
-              fontWeight: FontWeight.w500),
+              fontWeight: FontWeight.w700,
+              fontFamily: 'Mulish'),
         ),
       ),
       drawer: Navbar(
         userId: _auth.currentUser?.uid ?? '',
         username: username,
+        userimg: userimg,
       ), // Pass userId here
       body: SafeArea(
         child: Stack(
@@ -565,10 +545,8 @@ class _BotScreenState extends State<BotScreen> {
               itemCount: history.length,
               controller: _scrollController,
               itemBuilder: (context, index) {
-                // Since history is reversed, we need to access the items in reverse order
                 var content = history[index];
 
-                // Check if the content contains a button to display
                 if (content.hasButton && content.button != null) {
                   return Align(
                     alignment: content.isUser
@@ -576,15 +554,86 @@ class _BotScreenState extends State<BotScreen> {
                         : Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.only(bottom: 8.0),
-                      child: ElevatedButton(
-                        onPressed: content.button!.onPressed,
-                        child: Text(content.button!.label),
+                      child: Container(
+                        child: Column(
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Wizard',
+                                  style: const TextStyle(
+                                      fontSize: 11.5, color: Colors.grey),
+                                ),
+                                const SizedBox(
+                                  height: 5,
+                                ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                        width:
+                                            MediaQuery.sizeOf(context).width /
+                                                1.3,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 15, vertical: 13),
+                                        decoration: BoxDecoration(
+                                            color: Colors.grey.shade200,
+                                            borderRadius: BorderRadius.only(
+                                              bottomLeft:
+                                                  const Radius.circular(5),
+                                              topLeft:
+                                                  const Radius.circular(12),
+                                              topRight:
+                                                  const Radius.circular(12),
+                                              bottomRight:
+                                                  const Radius.circular(12),
+                                            )),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Seems like we provide that service! Click below to go to that page.",
+                                              style: TextStyle(
+                                                  fontFamily: 'Mulish',
+                                                  fontSize: 14),
+                                            ),
+                                            SizedBox(height: 4),
+                                            Center(
+                                              child: ElevatedButton(
+                                                style: ButtonStyle(
+                                                  backgroundColor:
+                                                      WidgetStatePropertyAll(
+                                                          Colors
+                                                              .green.shade400),
+                                                ),
+                                                onPressed:
+                                                    content.button!.onPressed,
+                                                child: Text(
+                                                  content.button!.label,
+                                                  style: TextStyle(
+                                                      color: Colors.white,
+                                                      fontFamily: 'Mulish',
+                                                      fontWeight:
+                                                          FontWeight.w500),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   );
                 }
 
-                // If the content has text, display the message
                 if (content.text != null && content.text!.isNotEmpty) {
                   return MessageTile(
                     sendByMe: content.isUser,
@@ -592,7 +641,6 @@ class _BotScreenState extends State<BotScreen> {
                   );
                 }
 
-                // If there's no valid text or button, return an empty widget
                 return const SizedBox.shrink();
               },
               separatorBuilder: (context, index) {
@@ -622,7 +670,8 @@ class _BotScreenState extends State<BotScreen> {
                           focusNode: _textFieldFocus,
                           decoration: InputDecoration(
                             hintText: 'What is troubling you...',
-                            hintStyle: const TextStyle(color: Colors.grey),
+                            hintStyle: const TextStyle(
+                                color: Colors.grey, fontFamily: 'Mulish'),
                             filled: true,
                             fillColor: Colors.grey.shade200,
                             contentPadding: const EdgeInsets.symmetric(
@@ -693,11 +742,11 @@ class _BotScreenState extends State<BotScreen> {
                         ),
                         child: _loading
                             ? Padding(
-                              padding: EdgeInsets.all(15),
-                              child: const CircularProgressIndicator.adaptive(
+                                padding: EdgeInsets.all(15),
+                                child: const CircularProgressIndicator.adaptive(
                                   backgroundColor: Colors.white,
                                 ),
-                            )
+                              )
                             : _textController.text.isEmpty
                                 ? const Icon(Icons.mic, color: Colors.white)
                                 : const Icon(Icons.send, color: Colors.white),

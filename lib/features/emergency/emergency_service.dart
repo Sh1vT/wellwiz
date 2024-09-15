@@ -123,6 +123,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         leading: CupertinoButton(
             child: const Icon(
@@ -137,29 +138,20 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         title: const Text(
           "Emergency Contacts",
           style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w500),
+              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Mulish'),
         ),
         centerTitle: true,
       ),
       body: ListView(
         children: [
-          // Container(
-          //   margin: const EdgeInsets.only(left: 16, top: 10),
-          //   child: const Text(
-          //     'You can add some emergency contacts here! In case of some SOS alert, they will be informed. Go ahead and add some.', textAlign: TextAlign.justify,
-          //     style: TextStyle(
-          //         fontSize: 16,
-          //         // fontWeight: FontWeight.w600,
-          //         fontFamily: 'Mulish'),
-          //   ),
-          // ),
+
           contacts.isEmpty
               ? Container(
                   margin: const EdgeInsets.all(16),
                   height: 60,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12),
-                    color: Colors.pink.shade100,
+                    color: Colors.green.shade100,
                   ),
                   child: const Center(
                     child: Text(
@@ -247,64 +239,68 @@ class ContactWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<Color> colorPalette = [
-      Color.fromARGB(255, 118, 190, 85),
-      Color.fromARGB(255, 53, 168, 100),
-      Color.fromARGB(255, 29, 121, 100),
+      Color.fromARGB(255, 145, 197, 123),
+      Color.fromARGB(255, 96, 172, 128),
+      Color.fromARGB(255, 66, 128, 113),
     ];
     Color randomColor = colorPalette[index % colorPalette.length];
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      height: 100,
-      decoration: BoxDecoration(
-          // gradient: LinearGradient(colors: [randomColor, Colors.green.shade400]),
-          borderRadius: BorderRadius.circular(12),
-          color: randomColor),
-      child: Row(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
+    return Column(
+      children: [SizedBox(height: 8),
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.all(16),
+          height: 100,
+          decoration: BoxDecoration(
+              // gradient: LinearGradient(colors: [randomColor, Colors.green.shade400]),
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.person,
-              size: 60,
-              color: randomColor,
-            ),
-          ),
-          const Spacer(),
-          Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.end,
+              color: randomColor),
+          child: Row(
             children: [
-              Text(
-                name,
-                style: const TextStyle(
-                    fontFamily: 'Mulish',
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white),
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.person,
+                  size: 60,
+                  color: randomColor,
+                ),
               ),
-              Text(
-                phone,
-                style: const TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.w400,
-                    color: Colors.white),
+              const Spacer(),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    name,
+                    style: const TextStyle(
+                        fontFamily: 'Mulish',
+                        fontSize: 20,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
+                  ),
+                  Text(
+                    phone,
+                    style: const TextStyle(
+                        fontFamily: 'Mulish',
+                        fontWeight: FontWeight.w400,
+                        color: Colors.white),
+                  ),
+                ],
               ),
+              Container(
+                margin: const EdgeInsets.only(left: 10),
+                child: IconButton(
+                  icon: const Icon(Icons.delete),
+                  onPressed: () => onDelete(index),
+                  color: Colors.white,
+                ),
+              )
             ],
           ),
-          Container(
-            margin: const EdgeInsets.only(left: 10),
-            child: IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: () => onDelete(index),
-              color: Colors.white,
-            ),
-          )
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

@@ -31,14 +31,23 @@ class DoctorTile extends StatelessWidget {
   final Doctor doctor;
   final String userId; // Add userId parameter
 
-  const DoctorTile({super.key, required this.doctor, required this.userId}); // Accept userId in the constructor
+  const DoctorTile(
+      {super.key,
+      required this.doctor,
+      required this.userId}); // Accept userId in the constructor
 
   void _showDoctorDetails(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(doctor.name),
+          title: Text(
+            doctor.name,
+            style: TextStyle(
+                color: Colors.green.shade600,
+                fontWeight: FontWeight.w700,
+                fontFamily: 'Mulish'),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -46,6 +55,7 @@ class DoctorTile extends StatelessWidget {
                 height: 100,
                 width: 100,
                 decoration: BoxDecoration(
+                  border: Border.all(color: Colors.green.shade400, width: 3),
                   shape: BoxShape.circle,
                   image: DecorationImage(
                     image: NetworkImage(doctor.imageUrl),
@@ -54,8 +64,14 @@ class DoctorTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              Text("Speciality: ${doctor.speciality}"),
-              Text("Degree: ${doctor.degree}"),
+              Text(
+                "Speciality: ${doctor.speciality}",
+                style: TextStyle(fontFamily: 'Mulish'),
+              ),
+              Text(
+                "Degree: ${doctor.degree}",
+                style: TextStyle(fontFamily: 'Mulish'),
+              ),
             ],
           ),
           actions: [
@@ -64,15 +80,28 @@ class DoctorTile extends StatelessWidget {
                 // Call the booking method when 'Book Appointment' is clicked
                 final appointmentService = AppointmentService();
                 Navigator.of(context).pop(); // Close the dialog first
-                await appointmentService.selectAndBookAppointment(context, doctor.id, userId); // Pass doctor.id instead of name
+                await appointmentService.selectAndBookAppointment(context,
+                    doctor.id, userId); // Pass doctor.id instead of name
               },
-              child: const Text("Book Appointment"),
+              child: Text(
+                "Book Appointment",
+                style: TextStyle(
+                    fontFamily: 'Mulish',
+                    color: Colors.green.shade600,
+                    fontWeight: FontWeight.w700),
+              ),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text("Cancel"),
+              child: Text(
+                "Cancel",
+                style: TextStyle(
+                    fontFamily: 'Mulish',
+                    color: Colors.red.shade400,
+                    fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         );
@@ -84,15 +113,21 @@ class DoctorTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => _showDoctorDetails(context),
-      child: Card(
+      child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+        decoration: BoxDecoration(
+          color: Colors.green.shade100,
+          // border: Border.all(color: Colors.green.shade700, width: 2),
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Column(
           children: [
-            // Display the doctor's image
+            Spacer(),
             Container(
               height: 100,
               width: 100,
               decoration: BoxDecoration(
+                border: Border.all(color: Colors.green.shade600, width: 3),
                 shape: BoxShape.circle,
                 image: DecorationImage(
                   image: NetworkImage(doctor.imageUrl),
@@ -100,24 +135,30 @@ class DoctorTile extends StatelessWidget {
                 ),
               ),
             ),
+            SizedBox(
+              height: 12,
+            ),
             // Doctor's name
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                doctor.name,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
+            Text(
+              doctor.name,
+              style: TextStyle(
+                  color: Colors.green.shade600,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'Mulish'),
+              textAlign: TextAlign.center,
             ),
             // Doctor's specialty
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                doctor.speciality,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-                textAlign: TextAlign.center,
+            Text(
+              doctor.speciality,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontFamily: 'Mulish',
               ),
+              textAlign: TextAlign.center,
             ),
+            Spacer(),
           ],
         ),
       ),
