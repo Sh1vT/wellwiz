@@ -167,12 +167,12 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: () {
                     if (row[2] == 1) {
                       return const Icon(Icons.arrow_upward,
-                          color: Colors.green);
+                          color: Colors.red);
                     } else if (row[2] == -1) {
                       return const Icon(Icons.arrow_downward,
                           color: Colors.red);
                     } else {
-                      return const Icon(Icons.remove, color: Colors.grey);
+                      return const Icon(Icons.thumb_up_sharp, color: Colors.green);
                     }
                   }(),
                 ),

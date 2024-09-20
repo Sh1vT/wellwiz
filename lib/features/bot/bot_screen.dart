@@ -231,8 +231,7 @@ class _BotScreenState extends State<BotScreen> {
     String prompt =
         """You are being used as a profiler for creating a medical profile of a user.
         This profile must consist everything that is important in terms of a medical enquiry.
-        For example, it could contain information imposed on user by doctor, such as dietary restrictions, physical restrictions, dietary preferences, exercise preferences, calorie intake, or anything that a doctor would tell a patient for better and steady recovery. It could also contain patients hormone or body fluids being low or high.
-        Check if this message by user contains any such information or not : $message.
+        For example, it could contain information imposed on user by doctor, such as dietary restrictions, physical restrictions, dietary preferences, exercise preferences, calorie intake, or anything that a doctor would tell a patient for better and steady recovery. Dont care if the user gives numerical value for bodily fluids like creatinine level, rbc count or some similar body fluid. The user's message is as follows : $message
         The current profile is stored as a json map as follows: $profileMap.
         If any profilable information is found, then return it as a short yet descriptive statement without formatting or quotes, similar to something like : I have low RBC count. or : I am not allowed to eat root vegetables.
         If whatever that is said in the message already exists in the profile map that was attached then respond with a plain text of "none" without any formatting and nothing else.
