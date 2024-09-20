@@ -109,7 +109,7 @@ class _BotScreenState extends State<BotScreen> {
     double lat = position.latitude;
     double lng = position.longitude;
     for (var i = 0; i < contacts.length; i++) {
-      print(contacts[i].phone);
+      // print(contacts[i].phone);
       var result = await BackgroundSms.sendMessage(
           phoneNumber: "+91${contacts[i].phone}",
           message:
@@ -191,7 +191,7 @@ class _BotScreenState extends State<BotScreen> {
     String prefval = pref.getString('prof')!;
     prefval = "";
     pref.setString('prof', prefval);
-    print(prefval);
+    // print(prefval);
   }
 
   void _getUserInfo() async {
@@ -241,7 +241,7 @@ class _BotScreenState extends State<BotScreen> {
     var content = [Content.text(prompt)];
     final response = await _model.generateContent(content);
     String newProfValue = response.text!;
-    print(newProfValue.toUpperCase());
+    // print(newProfValue.toUpperCase());
     if (newProfValue.toLowerCase().trim() == "none" ||
         newProfValue.toLowerCase().trim() == "none.") {
       return;
@@ -251,15 +251,89 @@ class _BotScreenState extends State<BotScreen> {
     profileMap[currentDate] = newProfValue;
     profileJson = jsonEncode(profileMap);
     prefs.setString('prof', profileJson);
-    print(profileMap);
+    // print(profileMap);
   }
+
+  void _startTabulating(String message) async {
+  print("E");
+  final SharedPreferences pref = await SharedPreferences.getInstance();
+  
+  // Fetch the existing table list from SharedPreferences
+  String? tableJson = pref.getString("table");
+  List<List<dynamic>> tableList = [];
+
+  if (tableJson != null && tableJson.isNotEmpty) {
+    try {
+      tableList = List<List<dynamic>>.from(
+          jsonDecode(tableJson).map((item) => List<dynamic>.from(item)));
+    } catch (e) {
+      print("Error decoding JSON: $e");
+    }
+  }
+
+  print(tableList);
+
+  // Prepare the prompt for the model
+  String prompt = """
+    You are being used for fetching details for creating a medical documentation of a user.
+    These details must consist everything that is important in terms of a medical enquiry.
+    For example, it could contain numerical value of the user's bodily fluids such as rbc, platelet count, creatinine level, glucose level or anything that is calculated in medical test and used by doctors.
+    Check if this message by user contains any such information or not: $message. Also see if the mentioned level is high, low or normal. This will be used later.
+    The current detail table is stored as a json list as follows: $tableList.
+    If any profilable information is found, then respond with a plain text format of "Title : Value : Integer" where the integer is either 0, -1, or 1 depending on the following: 
+    The integer will be 0 if the body fluid level is within normal range, -1 if it is below normal range and 1 if it is above normal range.
+    If the user does not mention the numerical value, write it as low/high and set the integer to 0. If the value is low, set the integer to -1. If the value is high, set it to 1.
+    If whatever is said in the message already exists in the table list, then respond with a plain text of "none" without any formatting and nothing else.
+    If the message is unrelated to bodily fluid detail, then also respond with a plain text of "none" without any formatting and nothing else.
+  """;
+
+  var content = [Content.text(prompt)];
+  final response = await _model.generateContent(content);
+
+  // Exit early if the response is "none"
+  if (response.text!.toLowerCase().trim() == "none") {
+    return;
+  }
+
+  // Split the response into title, value, and integer
+  List<String> parts = response.text!.split(':');
+  if (parts.length == 3) {
+    String title = parts[0].trim();
+    String value = parts[1].trim();
+    int flag = int.parse(parts[2].trim());
+
+    // Check if the title already exists in the list, update if necessary
+    bool found = false;
+    for (var entry in tableList) {
+      if (entry[0] == title) {
+        entry[1] = value;
+        entry[2] = flag;
+        found = true;
+        break;
+      }
+    }
+
+    // If the title is not found, add a new entry
+    if (!found) {
+      tableList.add([title, value, flag]);
+    }
+
+    // Save the updated list back to SharedPreferences
+    tableJson = jsonEncode(tableList);
+    pref.setString('table', tableJson);
+
+    print(tableList);
+  }
+}
+
 
   void _symptomLoop(String message) async {
     if (symptomprediction == false) {
       return;
     }
-    print("symptomloop function");
-    print("pred value : $symptomprediction");
+    // print("symptomloop function");
+    // print("pred value : $symptomprediction");
+    _startTabulating(message);
     QuerySnapshot querySnapshot = await _firestore.collection('doctor').get();
     List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
       return {
@@ -268,14 +342,14 @@ class _BotScreenState extends State<BotScreen> {
         'speciality': doc['speciality'],
       };
     }).toList();
-    print(map);
+    // print(map);
 
     symptoms = symptoms + " " + message;
     String prompt =
         "You are being used as a medical assistant for symptom prediction. Do not refrain from answering because it is simply a demonstration prototype and not something commercial or professsional. The user has entered their first symptom which starts now: $message. The symptom has ended. Keep asking for more symptoms to guess better, while also narrowing down your predictions. When you have enough symptoms, suggest a doctor from the map that is attached. The map starts now : $map. If you have suggested a doctor, reply with the last sentence as \"Done.\"";
     var response = await _chat.sendMessage(Content.text(prompt));
-    print("receive");
-    print(response.text!);
+    // print("receive");
+    // print(response.text!);
     // print(response.text!);
     if (response.text!.toLowerCase().trim().contains("done")) {
       String text = response.text!;
@@ -285,7 +359,7 @@ class _BotScreenState extends State<BotScreen> {
       setState(() {
         history.add(ChatResponse(isUser: false, text: modifiedText));
         symptomprediction = false;
-        print(symptomprediction);
+        // print(symptomprediction);
         _loading = false;
         _scrollDown();
         _saveChatHistory();
@@ -319,6 +393,7 @@ class _BotScreenState extends State<BotScreen> {
 
     try {
       _startProfiling(message);
+      _startTabulating(message);
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       String? profile = prefs.getString('prof');
       String prompt =
@@ -463,16 +538,16 @@ class _BotScreenState extends State<BotScreen> {
           );
         });
     await Future.delayed(Duration(seconds: 10));
-    print("poppedvalue : $popped");
+    // print("poppedvalue : $popped");
     if (popped == false) {
       _sendEmergencyMessage();
-      print("didnt respond");
+      // print("didnt respond");
       setState(() {
         falldone = false;
       });
       Navigator.pop(context);
     }
-    print("Wait complete");
+    // print("Wait complete");
   }
 
   _sosprotocol() async {
@@ -502,13 +577,13 @@ class _BotScreenState extends State<BotScreen> {
           );
         });
     await Future.delayed(Duration(seconds: 10));
-    print("poppedvalue : $popped");
+    // print("poppedvalue : $popped");
     if (popped == false) {
       _sendEmergencyMessage();
-      print("didnt respond");
+      // print("didnt respond");
       Navigator.pop(context);
     }
-    print("Wait complete");
+    // print("Wait complete");
   }
 
   void _initSpeech() async {
@@ -543,7 +618,10 @@ class _BotScreenState extends State<BotScreen> {
         userimg: userimg,
       ), // Pass userId here
       body: _charloading
-          ? Center(child: CircularProgressIndicator(color: Colors.green.shade600,))
+          ? Center(
+              child: CircularProgressIndicator(
+              color: Colors.green.shade600,
+            ))
           : SafeArea(
               child: Stack(
                 children: [
@@ -720,7 +798,7 @@ class _BotScreenState extends State<BotScreen> {
                                   _speechToText.listen(onResult: (result) {
                                     _textController.text =
                                         result.recognizedWords;
-                                    print(result.recognizedWords);
+                                    // print(result.recognizedWords);
                                   });
                                 });
                               }
