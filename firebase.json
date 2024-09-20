@@ -1,1 +1,39 @@
-{"flutter":{"platforms":{"android":{"default":{"projectId":"wellwiz-36ce7","appId":"1:750771365952:android:9b86a9d1c6f545829497a5","fileOutput":"android/app/google-services.json"}},"dart":{"lib/firebase_options.dart":{"projectId":"wellwiz-36ce7","configurations":{"android":"1:750771365952:android:9b86a9d1c6f545829497a5","ios":"1:750771365952:ios:a17a3645774bbac09497a5"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "wellwiz-36ce7",
+          "appId": "1:750771365952:android:9b86a9d1c6f545829497a5",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "wellwiz-36ce7",
+          "configurations": {
+            "android": "1:750771365952:android:9b86a9d1c6f545829497a5",
+            "ios": "1:750771365952:ios:a17a3645774bbac09497a5"
+          }
+        }
+      }
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ],
+      "predeploy": [
+        "npm --prefix \"$RESOURCE_DIR\" run lint",
+        "npm --prefix \"$RESOURCE_DIR\" run build"
+      ]
+    }
+  ]
+}

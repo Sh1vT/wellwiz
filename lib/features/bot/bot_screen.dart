@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
@@ -21,6 +20,7 @@ import 'message_tile.dart';
 import 'package:wellwiz/features/navbar/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class BotScreen extends StatefulWidget {
   const BotScreen({super.key});
@@ -216,6 +216,27 @@ class _BotScreenState extends State<BotScreen> {
     _initSpeech();
     // _clearProfileValues();
     // _testFirestorePermissions();
+    _setupFCM();
+  }
+
+  Future<void> _setupFCM() async {
+    FirebaseMessaging messaging = FirebaseMessaging.instance;
+
+    // Get the device token for sending notifications
+    String? token = await messaging.getToken();
+    print("FCM Token: $token");
+
+    // Store this token in Firestore for future notifications (Optional)
+    // await FirebaseFirestore.instance.collection('users').doc(userId).update({'fcmToken': token});
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Got a message whilst in the foreground!');
+      print('Message data: ${message.data}');
+      
+      if (message.notification != null) {
+        print('Message also contained a notification: ${message.notification}');
+      }
+    });
   }
 
   void _startProfiling(String message) async {
