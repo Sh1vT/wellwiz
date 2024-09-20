@@ -10,8 +10,8 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  // Map to store profile values along with their date and time
   Map<String, String> profileMap = {};
+  List<List<dynamic>> tableList = []; // For the table data
   bool emptyNow = false;
 
   @override
@@ -20,62 +20,59 @@ class _ProfilePageState extends State<ProfilePage> {
     _populateProfile();
   }
 
-  // Fetch profile from SharedPreferences
+  // Fetch profile and table data from SharedPreferences
   void _populateProfile() async {
     final pref = await SharedPreferences.getInstance();
+
+    // Fetch profile data
     String prefval = pref.getString('prof') ?? "";
-    print("prefval $prefval");
-    if (prefval.isEmpty || prefval=="{}") {
+    if (prefval.isEmpty || prefval == "{}") {
       setState(() {
         emptyNow = true;
       });
-      return;
+    } else {
+      setState(() {
+        profileMap = Map<String, String>.from(jsonDecode(prefval));
+      });
     }
-    print(prefval);
 
-    // Decode the JSON string into a map
-    setState(() {
-      profileMap = Map<String, String>.from(jsonDecode(prefval));
-    });
-    print(profileMap);
+    // Fetch table data
+    String? tableJson = pref.getString('table');
+    if (tableJson != null && tableJson.isNotEmpty) {
+      setState(() {
+        tableList = List<List<dynamic>>.from(
+            jsonDecode(tableJson).map((item) => List<dynamic>.from(item)));
+      });
+    }
   }
 
-  // Method to delete an entry
+  // Method to delete a profile entry
   void _deleteProfileValue(String key) async {
     final pref = await SharedPreferences.getInstance();
-
-    // Remove the entry from the map
     setState(() {
       profileMap.remove(key);
     });
-
-    // Encode the updated map and save it back to SharedPreferences
     String updatedProfile = jsonEncode(profileMap);
     pref.setString('prof', updatedProfile);
   }
 
-  // Method to add a new profile value
+  // Method to add a profile value
   void _addProfileValue(String newValue) async {
     final pref = await SharedPreferences.getInstance();
-
-    // Get the current date and time for uniqueness
     String currentDateTime =
         DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now());
 
-    // Add the new profile value with the current date and time as the key
     setState(() {
       profileMap[currentDateTime] = newValue;
     });
 
-    // Encode the map to JSON and save it
     String updatedProfile = jsonEncode(profileMap);
     pref.setString('prof', updatedProfile);
   }
 
-  // Show a dialog to enter a new profile value
+  // Show dialog to add profile
   void _showAddProfileDialog(BuildContext context) {
     TextEditingController _controller = TextEditingController();
-
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -98,7 +95,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   _addProfileValue(_controller.text);
                 }
                 setState(() {
-                  emptyNow=false;
+                  emptyNow = false;
                 });
                 Navigator.of(context).pop();
               },
@@ -110,108 +107,231 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Build the table of values fetched from the "table"
+  Widget _buildTable() {
+    if (tableList.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          'No table data available',
+          style: TextStyle(fontSize: 16, fontFamily: 'Mulish'),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Table(
+        border: TableBorder.all(color: Colors.green.shade400, width: 1),
+        columnWidths: const <int, TableColumnWidth>{
+          0: FlexColumnWidth(),
+          1: FlexColumnWidth(),
+          2: FixedColumnWidth(80),
+        },
+        children: [
+          TableRow(
+            decoration: BoxDecoration(
+              color: Colors.green.shade100,
+            ),
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Fluid',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Value',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Status',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          ...tableList.map((row) {
+            return TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(row[0]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(row[1]),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: () {
+                    if (row[2] == 1) {
+                      return const Icon(Icons.arrow_upward,
+                          color: Colors.red);
+                    } else if (row[2] == -1) {
+                      return const Icon(Icons.arrow_downward,
+                          color: Colors.red);
+                    } else {
+                      return const Icon(Icons.thumb_up_sharp, color: Colors.green);
+                    }
+                  }(),
+                ),
+              ],
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: CupertinoButton(
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
+          child: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+            size: 18,
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
         backgroundColor: Colors.green.shade400,
         title: const Text(
           "Profile",
           style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Mulish'),
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            fontFamily: 'Mulish',
+          ),
         ),
         centerTitle: true,
       ),
-      body: emptyNow
-          ? Container(
-              margin: const EdgeInsets.all(16),
-              height: 60,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                color: Colors.green.shade100,
-              ),
-              child: const Center(
-                child: Text(
-                  'Add something about yourself!',
-                  style: TextStyle(fontFamily: 'Mulish'),
+      body: Column(
+        children: [
+          // Heading for the table section
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              child: Text(
+                'Fluid Levels',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                  fontFamily: 'Mulish',
                 ),
               ),
-            )
-          : ListView.builder(
-              itemCount: profileMap.length,
-              itemBuilder: (context, index) {
-                String key = profileMap.keys.elementAt(index);
-                String value = profileMap[key]!;
+            ),
+          ),
+          _buildTable(), // Display the table of values
 
-                // Extract the date part from the key
-                String datePart = key.split(' ')[0];
-
-                return Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Container(
+          // Heading for the profile list section
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 16.0, top: 16, right: 16, bottom: 8),
+              child: Text(
+                'Traits',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green.shade700,
+                  fontFamily: 'Mulish',
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: emptyNow
+                ? Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 60,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Color.fromARGB(255, 42, 119, 72), width: 2),
+                      color: Colors.green.shade100,
                     ),
-                    padding: EdgeInsets.all(8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                    child: const Center(
+                      child: Text(
+                        'Add something about yourself!',
+                        style: TextStyle(fontFamily: 'Mulish'),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: profileMap.length,
+                    itemBuilder: (context, index) {
+                      String key = profileMap.keys.elementAt(index);
+                      String value = profileMap[key]!;
+
+                      String datePart = key.split(' ')[0];
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                                color: Color.fromARGB(255, 42, 119, 72),
+                                width: 2),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
                             children: [
-                              Text(
-                                "Created on : $datePart", // Display only the date
-                                style: TextStyle(
-                                  color: Color.fromARGB(255, 42, 119, 72),
-                                  fontFamily: 'Mulish',
-                                  fontSize: 12,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Created on : $datePart",
+                                      style: const TextStyle(
+                                        color: Color.fromARGB(255, 42, 119, 72),
+                                        fontFamily: 'Mulish',
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      value,
+                                      style: const TextStyle(
+                                        fontFamily: 'Mulish',
+                                        fontSize: 16,
+                                      ),
+                                      maxLines: null,
+                                      overflow: TextOverflow.visible,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Text(
-                                value, // Display the profile value
-                                style: TextStyle(
-                                  fontFamily: 'Mulish',
-                                  fontSize: 16,
-                                ),
-                                maxLines: null,
-                                overflow: TextOverflow.visible,
+                              IconButton(
+                                onPressed: () {
+                                  _deleteProfileValue(key);
+                                  setState(() {
+                                    _populateProfile();
+                                  });
+                                },
+                                icon: Icon(Icons.delete,
+                                    color: Colors.yellow.shade700),
                               ),
                             ],
                           ),
                         ),
-                        IconButton(
-                            onPressed: () {
-                              _deleteProfileValue(key);
-                              setState(() {
-                                _populateProfile();
-                              });
-                            },
-                            icon: Icon(Icons.delete,
-                                color: Colors.yellow.shade700)),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddProfileDialog(context),
         backgroundColor: Colors.green.shade400,
-        child: const Icon(Icons.add, color: Colors.white,),
+        child: const Icon(
+          Icons.add,
+          color: Colors.white,
+        ),
       ),
     );
   }
