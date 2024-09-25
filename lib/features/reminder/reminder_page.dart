@@ -169,6 +169,8 @@ class _ReminderPageState extends State<ReminderPage> {
     String title = '';
     String description = '';
     DateTime? scheduledTime;
+    TextEditingController titleController = TextEditingController();
+    TextEditingController descController = TextEditingController();
 
     showDialog(
       context: context,
@@ -180,11 +182,13 @@ class _ReminderPageState extends State<ReminderPage> {
             children: [
               TextField(
                 decoration: const InputDecoration(labelText: 'Title'),
-                onChanged: (value) => title = value,
+                // onChanged: (value) => title = value,
+                controller: titleController,
               ),
               TextField(
                 decoration: const InputDecoration(labelText: 'Description'),
-                onChanged: (value) => description = value,
+                // onChanged: (value) => description = value,
+                controller: descController,
               ),
               TextButton(
                 child: const Text('Select Date & Time'),
@@ -222,6 +226,12 @@ class _ReminderPageState extends State<ReminderPage> {
             TextButton(
               child: const Text('Add'),
               onPressed: () {
+                setState(() {
+                  title=titleController.text;
+                  description=descController.text;
+                });
+                print(title);
+                print(description);
                 if (title.isNotEmpty && description.isNotEmpty && scheduledTime != null) {
                   _addReminder(title, description, scheduledTime!);
                   Navigator.of(context).pop();
