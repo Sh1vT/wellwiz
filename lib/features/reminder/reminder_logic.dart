@@ -30,19 +30,19 @@ class ReminderLogic {
 
     // Schedule the notification using WorkManager
     await Workmanager().registerOneOffTask(
-      validId.toString(), // Use the document ID as a unique identifier
-      'reminderTask', // Task name
-      inputData: {
-        'id': validId,
-        'title': title,
-        'description': description,
-        'scheduledTime': scheduledTime.millisecondsSinceEpoch
-      },
-      initialDelay: scheduledTime.difference(DateTime.now()).inMilliseconds > 0
-          ? scheduledTime.difference(DateTime.now()) // Delay until the scheduled time
-          : Duration.zero,
-      existingWorkPolicy: ExistingWorkPolicy.replace, // Replace any existing task with the same ID
-    );
+  validId.toString(), // Use a unique identifier
+  'reminderTask', // Task name
+  inputData: {
+    'id': validId,
+    'title': title, // Pass the title of the reminder
+    'description': description, // Pass the description of the reminder
+  },
+  initialDelay: scheduledTime.difference(DateTime.now()).inMilliseconds > 0
+      ? scheduledTime.difference(DateTime.now())
+      : Duration.zero,
+  existingWorkPolicy: ExistingWorkPolicy.replace, // Replace any existing task with the same ID
+);
+
   }
 
   Future<void> deleteReminder(String reminderId) async {

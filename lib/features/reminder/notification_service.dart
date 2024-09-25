@@ -85,4 +85,22 @@ class NotificationService {
   Future<void> init() async {
     // Custom initialization logic can be placed here if needed
   }
+
+  Future<void> showHardcodedNotification(int id, String title, String description) async {
+  await _notificationsPlugin.show(
+    id,
+    title, // Use the passed title for the notification
+    description, // Use the passed description for the notification
+    const NotificationDetails(
+      android: AndroidNotificationDetails(
+        'reminder_channel', // Ensure this matches your channel ID
+        'Reminders',
+        importance: Importance.max,
+        priority: Priority.high,
+        playSound: true,
+      ),
+    ),
+  );
+}
+
 }

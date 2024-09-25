@@ -1,7 +1,7 @@
-
 import 'package:flutter/material.dart';
 import 'package:wellwiz/features/reminder/reminder_model.dart';
 import 'reminder_logic.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class ReminderPage extends StatefulWidget {
   final String userId;
@@ -15,12 +15,53 @@ class ReminderPage extends StatefulWidget {
 class _ReminderPageState extends State<ReminderPage> {
   final ReminderLogic _reminderLogic = ReminderLogic();
   List<Reminder> _reminders = [];
+  FlutterLocalNotificationsPlugin? _flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
+    // _initializeNotifications(); // Initialize notifications
     _fetchReminders(); // Fetch reminders on init
+    // _scheduleTestNotification(); // Schedule test notification
   }
+
+  // Future<void> _initializeNotifications() async {
+  //   _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  //   const AndroidInitializationSettings initializationSettingsAndroid =
+  //       AndroidInitializationSettings('@mipmap/ic_launcher'); // Change this to your app icon
+
+  //   const InitializationSettings initializationSettings = InitializationSettings(
+  //     android: initializationSettingsAndroid,
+  //   );
+
+  //   await _flutterLocalNotificationsPlugin!.initialize(initializationSettings);
+  // }
+
+  // Future<void> _scheduleTestNotification() async {
+  //   await Future.delayed(Duration(seconds: 10)); // Wait for 10 seconds
+
+  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
+  //       AndroidNotificationDetails(
+  //     'your_channel_id', // Change this to your channel ID
+  //     'your_channel_name', // Change this to your channel name
+  //     channelDescription: 'Your channel description',
+  //     importance: Importance.max,
+  //     priority: Priority.high,
+  //     showWhen: false,
+  //   );
+
+  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
+  //     android: androidPlatformChannelSpecifics,
+  //   );
+
+  //   await _flutterLocalNotificationsPlugin!.show(
+  //     0, // Notification ID
+  //     'Appointment', // Notification title
+  //     'My pills', // Notification description
+  //     platformChannelSpecifics,
+  //     payload: 'test_payload', // Optional payload
+  //   );
+  // }
 
   Future<void> _fetchReminders() async {
     // Fetch reminders from Firestore
@@ -47,7 +88,22 @@ class _ReminderPageState extends State<ReminderPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reminders'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pop(); // Navigate back
+          },
+        ),
+        backgroundColor: Colors.green.shade400,
+        title: const Text(
+          'Reminders',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -59,18 +115,49 @@ class _ReminderPageState extends State<ReminderPage> {
         itemCount: _reminders.length,
         itemBuilder: (context, index) {
           final reminder = _reminders[index];
-          return ListTile(
-            title: Text(reminder.title),
-            subtitle: Text(reminder.description),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(reminder.scheduledTime.toString()),
-                IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _deleteReminder(reminder),
+
+          // Replicate the UI here
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color.fromARGB(255, 42, 119, 72),
+                  width: 2,
                 ),
-              ],
+              ),
+              padding: const EdgeInsets.all(8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          reminder.title,
+                          style: const TextStyle(
+                            fontFamily: 'Mulish',
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          reminder.description,
+                          style: const TextStyle(
+                            color: Color.fromARGB(255, 42, 119, 72),
+                            fontFamily: 'Mulish',
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.delete, color: Colors.yellow.shade700),
+                    onPressed: () => _deleteReminder(reminder),
+                  ),
+                ],
+              ),
             ),
           );
         },
