@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:background_sms/background_sms.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:sensors_plus/sensors_plus.dart';
@@ -50,6 +52,8 @@ class _BotScreenState extends State<BotScreen> {
   bool _speechEnabled = false;
   String _lastWords = '';
   bool _charloading = false;
+  late File _image;
+  bool imageInitialized = false;
 
   void _scrollDown() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -232,7 +236,7 @@ class _BotScreenState extends State<BotScreen> {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Got a message whilst in the foreground!');
       print('Message data: ${message.data}');
-      
+
       if (message.notification != null) {
         print('Message also contained a notification: ${message.notification}');
       }
@@ -275,26 +279,26 @@ class _BotScreenState extends State<BotScreen> {
   }
 
   void _startTabulating(String message) async {
-  print("E");
-  final SharedPreferences pref = await SharedPreferences.getInstance();
-  
-  // Fetch the existing table list from SharedPreferences
-  String? tableJson = pref.getString("table");
-  List<List<dynamic>> tableList = [];
+    print("E");
+    final SharedPreferences pref = await SharedPreferences.getInstance();
 
-  if (tableJson != null && tableJson.isNotEmpty) {
-    try {
-      tableList = List<List<dynamic>>.from(
-          jsonDecode(tableJson).map((item) => List<dynamic>.from(item)));
-    } catch (e) {
-      print("Error decoding JSON: $e");
+    // Fetch the existing table list from SharedPreferences
+    String? tableJson = pref.getString("table");
+    List<List<dynamic>> tableList = [];
+
+    if (tableJson != null && tableJson.isNotEmpty) {
+      try {
+        tableList = List<List<dynamic>>.from(
+            jsonDecode(tableJson).map((item) => List<dynamic>.from(item)));
+      } catch (e) {
+        print("Error decoding JSON: $e");
+      }
     }
-  }
 
-  print(tableList);
+    print(tableList);
 
-  // Prepare the prompt for the model
-  String prompt = """
+    // Prepare the prompt for the model
+    String prompt = """
     You are being used for fetching details for creating a medical documentation of a user.
     These details must consist everything that is important in terms of a medical enquiry.
     For example, it could contain numerical value of the user's bodily fluids such as rbc, platelet count, creatinine level, glucose level or anything that is calculated in medical test and used by doctors.
@@ -307,45 +311,44 @@ class _BotScreenState extends State<BotScreen> {
     If the message is unrelated to bodily fluid detail, then also respond with a plain text of "none" without any formatting and nothing else.
   """;
 
-  var content = [Content.text(prompt)];
-  final response = await _model.generateContent(content);
+    var content = [Content.text(prompt)];
+    final response = await _model.generateContent(content);
 
-  // Exit early if the response is "none"
-  if (response.text!.toLowerCase().trim() == "none") {
-    return;
-  }
+    // Exit early if the response is "none"
+    if (response.text!.toLowerCase().trim() == "none") {
+      return;
+    }
 
-  // Split the response into title, value, and integer
-  List<String> parts = response.text!.split(':');
-  if (parts.length == 3) {
-    String title = parts[0].trim();
-    String value = parts[1].trim();
-    int flag = int.parse(parts[2].trim());
+    // Split the response into title, value, and integer
+    List<String> parts = response.text!.split(':');
+    if (parts.length == 3) {
+      String title = parts[0].trim();
+      String value = parts[1].trim();
+      int flag = int.parse(parts[2].trim());
 
-    // Check if the title already exists in the list, update if necessary
-    bool found = false;
-    for (var entry in tableList) {
-      if (entry[0] == title) {
-        entry[1] = value;
-        entry[2] = flag;
-        found = true;
-        break;
+      // Check if the title already exists in the list, update if necessary
+      bool found = false;
+      for (var entry in tableList) {
+        if (entry[0] == title) {
+          entry[1] = value;
+          entry[2] = flag;
+          found = true;
+          break;
+        }
       }
+
+      // If the title is not found, add a new entry
+      if (!found) {
+        tableList.add([title, value, flag]);
+      }
+
+      // Save the updated list back to SharedPreferences
+      tableJson = jsonEncode(tableList);
+      pref.setString('table', tableJson);
+
+      print(tableList);
     }
-
-    // If the title is not found, add a new entry
-    if (!found) {
-      tableList.add([title, value, flag]);
-    }
-
-    // Save the updated list back to SharedPreferences
-    tableJson = jsonEncode(tableList);
-    pref.setString('table', tableJson);
-
-    print(tableList);
   }
-}
-
 
   void _symptomLoop(String message) async {
     if (symptomprediction == false) {
@@ -394,6 +397,167 @@ class _BotScreenState extends State<BotScreen> {
     _saveChatHistory();
   }
 
+  Future<void> getImageCamera(BuildContext context) async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            "Select Image Source",
+            style: TextStyle(fontFamily: 'Mulish'),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: Colors.green.shade600,),
+                title: const Text(
+                  "Camera",
+                  style: TextStyle(fontFamily: 'Mulish'),
+                ),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await Permission.camera.request();
+                  var image = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                  );
+
+                  if (image != null) {
+                    setState(() {
+                      _image = File(image.path);
+                      imageInitialized = true;
+                    });
+                    print("sending");
+                    _sendImageMessage();
+                  } else {
+                    Fluttertoast.showToast(msg: "No image selected");
+                    debugPrint('No image selected.');
+                  }
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo, color: Colors.green.shade600,),
+                title: const Text(
+                  "Gallery",
+                  style: TextStyle(fontFamily: 'Mulish'),
+                ),
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  var image = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+
+                  if (image != null) {
+                    setState(() {
+                      _image = File(image.path);
+                      imageInitialized = true;
+                    });
+                    print("sending");
+                    _sendImageMessage();
+                  } else {
+                    Fluttertoast.showToast(msg: "No image selected");
+                    debugPrint('No image selected.');
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _sendImageMessage() async {
+    final imgBytes = await _image.readAsBytes();
+    final SharedPreferences pref = await SharedPreferences.getInstance();
+
+    // Fetch the existing table list from SharedPreferences
+    String? tableJson = pref.getString("table");
+    List<List<dynamic>> tableList = [];
+
+    if (tableJson != null && tableJson.isNotEmpty) {
+      try {
+        tableList = List<List<dynamic>>.from(
+            jsonDecode(tableJson).map((item) => List<dynamic>.from(item)));
+      } catch (e) {
+        print("Error decoding JSON: $e");
+      }
+    }
+    Fluttertoast.showToast(msg: "Extracting information...");
+
+    // Constructing the prompt for the model
+    String prompt =
+        """You are being used as a medical chatbot for purely demonstration purposes and not professionally or commercially. 
+        Here is a picture of a medical report of a user that has to be assessed for all the body chemical levels of the user. 
+        The image will arrive as a multipart request so you will only receive its bytedata.
+        Simply extract the values such as chemical name and level of the chemical in user's body present in the report and fill this table formatted as json list that starts now : $tableList
+         If any profilable information is found, then respond with a plain text format of "Title : Value : Integer" where the integer is either 0, -1, or 1 depending on the following: 
+     The integer will be 0 if the body fluid level is within normal range, -1 if it is below normal range and 1 if it is above normal range.
+     If the user does not mention the numerical value, write it as low/high and set the integer to 0. If the value is low, set the integer to -1. If the value is high, set it to 1.
+     If whatever is said in the message already exists in the table list, then respond with a plain text of "none" without any formatting and nothing else.
+     If the message is unrelated to bodily fluid detail, then also respond with a plain text of "none" without any formatting and nothing else.
+        """;
+
+    final content = [
+      Content.multi([
+        TextPart(prompt),
+        DataPart('image/jpeg', imgBytes),
+      ])
+    ];
+
+    final response = await _model.generateContent(content);
+    final responseText = response.text!.toLowerCase().trim();
+
+    // Debugging output
+    print("Response: $responseText");
+
+    if (responseText == "none") {
+      Fluttertoast.showToast(msg: "Please select a medical test report.");
+      return;
+    }
+
+    // Handle Dart list-like response (not JSON)
+    try {
+      // Remove surrounding brackets and split the response manually
+      String cleanedResponse = response.text!.replaceAll(RegExp(r'[\[\]]'), '');
+      List<String> responseData =
+          cleanedResponse.split(',').map((e) => e.trim()).toList();
+
+      if (responseData.length == 3) {
+        String title = responseData[0];
+        String value = responseData[1];
+        int flag = int.tryParse(responseData[2]) ?? 0;
+
+        // Check if the title already exists in the list, update if necessary
+        bool found = false;
+        for (var entry in tableList) {
+          if (entry[0] == title) {
+            entry[1] = value;
+            entry[2] = flag;
+            found = true;
+            break;
+          }
+        }
+
+        // If the title is not found, add a new entry
+        if (!found) {
+          tableList.add([title, value, flag]);
+        }
+
+        // Save the updated list back to SharedPreferences
+        tableJson = jsonEncode(tableList);
+        await pref.setString('table', tableJson);
+
+        print(tableList);
+        Fluttertoast.showToast(msg: "Levels updated!");
+      } else {
+        print("Unexpected response format.");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "An unknown error occured!");
+      print("Error parsing response: $e");
+    }
+  }
+
   Future<void> _sendChatMessage(String message) async {
     if (message.trim().isEmpty) {
       return; // Do nothing if the message is empty
@@ -417,7 +581,15 @@ class _BotScreenState extends State<BotScreen> {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       String? profile = prefs.getString('prof');
       String prompt =
-          "You are being used as a medical chatbot for health related queries or appointment scheduling. It is only a demonstration prototype and you are not being used for something professional or commercial. The user will enter his message now: $message. User message has ended. The user can also have a profile section where they may have been asked to avoid or take care of some things. The profile section starts now: $profile. Profile section has ended. Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. Also if the user is asking for appointment booking, simply respond with the word \"appointment\" and nothing else. Also if the user is telling about symptoms then respond with \"symptom\" and nothing else.";
+          """You are being used as a medical chatbot for health related queries or appointment scheduling. 
+          It is only a demonstration prototype and you are not being used for something professional or commercial. 
+          The user will enter his message now: $message. User message has ended. 
+          The user can also have a profile section where they may have been asked to avoid or take care of some things. 
+          The profile section starts now: $profile. Profile section has ended. 
+          Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. 
+          Also if the user is asking for appointment booking, simply respond with the word "appointment" and nothing else. 
+          Also if the user is asking for scanning a report or entering health data through a report, simply respond with the word "report" and nothing else. 
+          Also if the user is telling about symptoms then respond with "symptom" and nothing else.""";
       var response = await _chat.sendMessage(Content.text(prompt));
       // print("Response from model: ${response.text}");
 
@@ -445,6 +617,19 @@ class _BotScreenState extends State<BotScreen> {
             symptomprediction = true;
           });
           _symptomLoop(message);
+        } else if (response.text!.toLowerCase().trim() == ("report") ||
+            response.text!.toLowerCase().trim() == ("report.")) {
+          history.add(ChatResponse(
+            isUser: false,
+            hasButton: true,
+            button: ChatButton(
+              label: 'Scan a Report',
+              onPressed: () async {
+                print('e');
+                getImageCamera(context);
+              },
+            ),
+          ));
         } else {
           history.add(ChatResponse(isUser: false, text: response.text));
         }
@@ -709,7 +894,7 @@ class _BotScreenState extends State<BotScreen> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    "Seems like we provide that service! Click below to go to that page.",
+                                                    "Seems like we provide that service! Click below to do that.",
                                                     style: TextStyle(
                                                         fontFamily: 'Mulish',
                                                         fontSize: 14),
