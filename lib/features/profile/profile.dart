@@ -11,7 +11,7 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, String> profileMap = {};
-  List<List<dynamic>> tableList = []; // For the table data
+  List<List<dynamic>> tableList = [];
   bool emptyNow = false;
 
   @override
@@ -20,11 +20,9 @@ class _ProfilePageState extends State<ProfilePage> {
     _populateProfile();
   }
 
-  // Fetch profile and table data from SharedPreferences
   void _populateProfile() async {
     final pref = await SharedPreferences.getInstance();
 
-    // Fetch profile data
     String prefval = pref.getString('prof') ?? "";
     if (prefval.isEmpty || prefval == "{}") {
       setState(() {
@@ -36,7 +34,6 @@ class _ProfilePageState extends State<ProfilePage> {
       });
     }
 
-    // Fetch table data
     String? tableJson = pref.getString('table');
     if (tableJson != null && tableJson.isNotEmpty) {
       setState(() {
@@ -46,7 +43,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Method to delete a profile entry
   void _deleteProfileValue(String key) async {
     final pref = await SharedPreferences.getInstance();
     setState(() {
@@ -56,7 +52,6 @@ class _ProfilePageState extends State<ProfilePage> {
     pref.setString('prof', updatedProfile);
   }
 
-  // Method to add a profile value
   void _addProfileValue(String newValue) async {
     final pref = await SharedPreferences.getInstance();
     String currentDateTime =
@@ -70,7 +65,6 @@ class _ProfilePageState extends State<ProfilePage> {
     pref.setString('prof', updatedProfile);
   }
 
-  // Show dialog to add profile
   void _showAddProfileDialog(BuildContext context) {
     TextEditingController _controller = TextEditingController();
     showDialog(
@@ -107,7 +101,15 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Build the table of values fetched from the "table"
+  // Method to delete all table data
+  void _deleteTableData() async {
+    final pref = await SharedPreferences.getInstance();
+    setState(() {
+      tableList.clear(); // Clear the tableList in memory
+    });
+    await pref.remove('table'); // Remove the 'table' key from SharedPreferences
+  }
+
   Widget _buildTable() {
     if (tableList.isEmpty) {
       return Container(
@@ -118,6 +120,9 @@ class _ProfilePageState extends State<ProfilePage> {
         ),
       );
     }
+
+    // Sort the tableList alphabetically by the first column (Fluid)
+    tableList.sort((a, b) => a[0].compareTo(b[0]));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -136,7 +141,7 @@ class _ProfilePageState extends State<ProfilePage> {
             children: const [
               Padding(
                 padding: EdgeInsets.all(8.0),
-                child: Text('Fluid',
+                child: Text('Chemical',
                     style: TextStyle(fontWeight: FontWeight.bold)),
               ),
               Padding(
@@ -156,21 +161,20 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(row[0]),
+                  child: Text(row[0]), // Fluid
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(row[1]),
+                  child: Text(row[1]), // Value
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: () {
+                    // Status Icon (arrows based on row[2] value)
                     if (row[2] == 1) {
-                      return const Icon(Icons.arrow_upward,
-                          color: Colors.red);
+                      return const Icon(Icons.arrow_upward, color: Colors.red);
                     } else if (row[2] == -1) {
-                      return const Icon(Icons.arrow_downward,
-                          color: Colors.red);
+                      return const Icon(Icons.arrow_downward, color: Colors.red);
                     } else {
                       return const Icon(Icons.thumb_up_sharp, color: Colors.green);
                     }
@@ -209,45 +213,54 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.white),
+            onPressed: () {
+              _deleteTableData(); // Call the delete method when the button is pressed
+            },
+          ),
+        ],
       ),
-      body: Column(
-        children: [
-          // Heading for the table section
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-              child: Text(
-                'Fluid Levels',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade700,
-                  fontFamily: 'Mulish',
+      body: SingleChildScrollView( // Wrap with SingleChildScrollView
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                child: Text(
+                  'Health Metrics',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                    fontFamily: 'Mulish',
+                  ),
                 ),
               ),
             ),
-          ),
-          _buildTable(), // Display the table of values
+            _buildTable(), // Display the table of values
 
-          // Heading for the profile list section
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16.0, top: 16, right: 16, bottom: 8),
-              child: Text(
-                'Traits',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green.shade700,
-                  fontFamily: 'Mulish',
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                    left: 16.0, top: 16, right: 16, bottom: 8),
+                child: Text(
+                  'Traits',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                    fontFamily: 'Mulish',
+                  ),
                 ),
               ),
             ),
-          ),
-          Expanded(
-            child: emptyNow
+            emptyNow
                 ? Container(
                     margin: const EdgeInsets.symmetric(horizontal: 16),
                     height: 60,
@@ -263,6 +276,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   )
                 : ListView.builder(
+                    physics: NeverScrollableScrollPhysics(), // Disable internal scroll
+                    shrinkWrap: true, // Wrap content to avoid overflow
                     itemCount: profileMap.length,
                     itemBuilder: (context, index) {
                       String key = profileMap.keys.elementAt(index);
@@ -271,7 +286,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       String datePart = key.split(' ')[0];
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
                         child: Container(
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
@@ -322,8 +338,8 @@ class _ProfilePageState extends State<ProfilePage> {
                       );
                     },
                   ),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddProfileDialog(context),

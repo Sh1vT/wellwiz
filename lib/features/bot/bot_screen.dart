@@ -410,7 +410,10 @@ class _BotScreenState extends State<BotScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: Icon(Icons.camera_alt, color: Colors.green.shade600,),
+                leading: Icon(
+                  Icons.camera_alt,
+                  color: Colors.green.shade600,
+                ),
                 title: const Text(
                   "Camera",
                   style: TextStyle(fontFamily: 'Mulish'),
@@ -436,7 +439,10 @@ class _BotScreenState extends State<BotScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.photo, color: Colors.green.shade600,),
+                leading: Icon(
+                  Icons.photo,
+                  color: Colors.green.shade600,
+                ),
                 title: const Text(
                   "Gallery",
                   style: TextStyle(fontFamily: 'Mulish'),
@@ -482,20 +488,31 @@ class _BotScreenState extends State<BotScreen> {
         print("Error decoding JSON: $e");
       }
     }
+
     Fluttertoast.showToast(msg: "Extracting information...");
 
-    // Constructing the prompt for the model
-    String prompt =
-        """You are being used as a medical chatbot for purely demonstration purposes and not professionally or commercially. 
-        Here is a picture of a medical report of a user that has to be assessed for all the body chemical levels of the user. 
-        The image will arrive as a multipart request so you will only receive its bytedata.
-        Simply extract the values such as chemical name and level of the chemical in user's body present in the report and fill this table formatted as json list that starts now : $tableList
-         If any profilable information is found, then respond with a plain text format of "Title : Value : Integer" where the integer is either 0, -1, or 1 depending on the following: 
-     The integer will be 0 if the body fluid level is within normal range, -1 if it is below normal range and 1 if it is above normal range.
-     If the user does not mention the numerical value, write it as low/high and set the integer to 0. If the value is low, set the integer to -1. If the value is high, set it to 1.
-     If whatever is said in the message already exists in the table list, then respond with a plain text of "none" without any formatting and nothing else.
-     If the message is unrelated to bodily fluid detail, then also respond with a plain text of "none" without any formatting and nothing else.
-        """;
+    // Constructing the modified prompt
+    String prompt = """
+    You are being used as a medical chatbot for demonstration purposes. 
+    The user has submitted a medical report in image form, and you need to extract body chemical levels. 
+    Here is the current table of body chemical levels stored as a JSON list: $tableList.
+
+    Instructions:
+    1. Extract the body chemical levels from the medical report and format them as "Title : Value : Integer" where:
+      - "Title" is the name of the chemical or component. If it is written in short then write the full form or the more well known version of that title.
+      - "Value" is the numerical level.
+      - "Integer" is 0, -1, or 1 depending on the following:
+        - 0: Level is within the normal range
+        - -1: Level is below the normal range
+        - 1: Level is above the normal range
+
+    2. Compare the extracted chemical levels against the provided table list. 
+      - If a chemical level is missing from the table, or if its value has changed, return it in the response.
+      - Only return those entries that either aren't found in the `tableList` or have updated values.
+
+    Return the list of updated or new chemical levels in the format "Title : Value : Integer".
+    If nothing is found, return "none".
+  """;
 
     final content = [
       Content.multi([
@@ -511,49 +528,55 @@ class _BotScreenState extends State<BotScreen> {
     print("Response: $responseText");
 
     if (responseText == "none") {
-      Fluttertoast.showToast(msg: "Please select a medical test report.");
+      Fluttertoast.showToast(msg: "No new or updated levels found.");
       return;
     }
 
-    // Handle Dart list-like response (not JSON)
+    // Handle the response as plain text
     try {
-      // Remove surrounding brackets and split the response manually
-      String cleanedResponse = response.text!.replaceAll(RegExp(r'[\[\]]'), '');
-      List<String> responseData =
-          cleanedResponse.split(',').map((e) => e.trim()).toList();
+      List<String> entries =
+          responseText.split('\n').map((e) => e.trim()).toList();
 
-      if (responseData.length == 3) {
-        String title = responseData[0];
-        String value = responseData[1];
-        int flag = int.tryParse(responseData[2]) ?? 0;
+      for (var entry in entries) {
+        // Example entry: "Title : Value : Integer"
+        List<String> parts = entry.split(':').map((e) => e.trim()).toList();
 
-        // Check if the title already exists in the list, update if necessary
-        bool found = false;
-        for (var entry in tableList) {
-          if (entry[0] == title) {
-            entry[1] = value;
-            entry[2] = flag;
-            found = true;
-            break;
+        if (parts.length == 3) {
+          String title = parts[0];
+          String value = parts[1];
+          int flag = int.tryParse(parts[2]) ?? 0;
+
+          // Check if the title already exists in the list, update if necessary
+          bool found = false;
+          for (var existingEntry in tableList) {
+            if (existingEntry[0] == title) {
+              if (existingEntry[1] != value || existingEntry[2] != flag) {
+                // Update the existing entry if the value or flag has changed
+                existingEntry[1] = value;
+                existingEntry[2] = flag;
+              }
+              found = true;
+              break;
+            }
           }
+
+          // If the title is not found, add a new entry
+          if (!found) {
+            tableList.add([title, value, flag]);
+          }
+        } else {
+          print("Unexpected entry format: $entry");
         }
-
-        // If the title is not found, add a new entry
-        if (!found) {
-          tableList.add([title, value, flag]);
-        }
-
-        // Save the updated list back to SharedPreferences
-        tableJson = jsonEncode(tableList);
-        await pref.setString('table', tableJson);
-
-        print(tableList);
-        Fluttertoast.showToast(msg: "Levels updated!");
-      } else {
-        print("Unexpected response format.");
       }
+
+      // Save the updated list back to SharedPreferences
+      tableJson = jsonEncode(tableList);
+      await pref.setString('table', tableJson);
+
+      print(tableList);
+      Fluttertoast.showToast(msg: "Updated levels added to table.");
     } catch (e) {
-      Fluttertoast.showToast(msg: "An unknown error occured!");
+      Fluttertoast.showToast(msg: "An unknown error occurred!");
       print("Error parsing response: $e");
     }
   }
