@@ -62,75 +62,109 @@ class UserAppointmentsPage extends StatelessWidget {
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
-            .collectionGroup('Appointments')
-            .where('userId', isEqualTo: userId)
-            .where('startTime', isGreaterThan: DateTime.now())
-            .snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
+  stream: FirebaseFirestore.instance
+      .collectionGroup('Appointments')
+      .where('userId', isEqualTo: userId)
+      .where('startTime', isGreaterThan: DateTime.now())
+      .snapshots(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error loading appointments.'));
-          }
+    if (snapshot.hasError) {
+      return const Center(child: Text('Error loading appointments.'));
+    }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No future appointments found.'));
-          }
+    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+      return const Center(child: Text('No future appointments found.'));
+    }
 
-          final appointments = snapshot.data!.docs;
+    final appointments = snapshot.data!.docs;
 
-          return ListView.builder(
-            itemCount: appointments.length,
-            itemBuilder: (context, index) {
-              final appointment = appointments[index];
-              final data = appointment.data() as Map<String, dynamic>;
+    return ListView.builder(
+      itemCount: appointments.length,
+      itemBuilder: (context, index) {
+        final appointment = appointments[index];
+        final data = appointment.data() as Map<String, dynamic>;
 
-              // Parse the appointment details
-              final startTime = (data['startTime'] as Timestamp).toDate();
-              final endTime = (data['endTime'] as Timestamp).toDate();
-              final status = data['status'];
-              final doctorId = appointment.reference.parent.parent!.id;
-              final appointmentId = appointment.id;
+        // Parse the appointment details
+        final startTime = (data['startTime'] as Timestamp).toDate();
+        final endTime = (data['endTime'] as Timestamp).toDate();
+        final status = data['status'];
+        final doctorId = appointment.reference.parent.parent!.id;
+        final appointmentId = appointment.id;
 
-              return FutureBuilder<String>(
-                future: _getDoctorName(doctorId),
-                builder: (context, doctorSnapshot) {
-                  if (doctorSnapshot.connectionState == ConnectionState.waiting) {
-                    return const ListTile(
-                      title: Text('Loading...'),
-                    );
-                  }
+        return FutureBuilder<String>(
+          future: _getDoctorName(doctorId),
+          builder: (context, doctorSnapshot) {
+            if (doctorSnapshot.connectionState == ConnectionState.waiting) {
+              return const ListTile(
+                title: Text('Loading...'),
+              );
+            }
 
-                  if (doctorSnapshot.hasError) {
-                    return const ListTile(
-                      title: Text('Error loading doctor information'),
-                    );
-                  }
+            if (doctorSnapshot.hasError) {
+              return const ListTile(
+                title: Text('Error loading doctor information'),
+              );
+            }
 
-                  final doctorName = doctorSnapshot.data ?? 'Unknown Doctor';
+            final doctorName = doctorSnapshot.data ?? 'Unknown Doctor';
 
-                  return Card(
-                    margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
-                    child: ListTile(
-                      title: Text('Appointment on ${DateFormat.yMMMd().add_jm().format(startTime)}'),
-                      subtitle: Text('Status: $status\nDoctor: $doctorName'),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _deleteAppointment(doctorId, appointmentId);
-                        },
+            // Replicate the UI here
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: const Color.fromARGB(255, 42, 119, 72),
+                    width: 2,
+                  ),
+                ),
+                padding: const EdgeInsets.all(8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Appointment on ${DateFormat.yMMMd().add_jm().format(startTime)}',
+                            style: const TextStyle(
+                              fontFamily: 'Mulish',
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            'Status: $status\nDoctor: $doctorName',
+                            style: const TextStyle(
+                              color: Color.fromARGB(255, 42, 119, 72),
+                              fontFamily: 'Mulish',
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      ),
+                    IconButton(
+                      onPressed: () {
+                        _deleteAppointment(doctorId, appointmentId);
+                      },
+                      icon: Icon(Icons.delete, color: Colors.yellow.shade700),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  },
+),
+
     );
   }
 }

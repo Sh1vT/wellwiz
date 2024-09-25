@@ -201,7 +201,7 @@ class Navbar extends StatelessWidget {
             ListTile(
               minTileHeight: 60,
               leading: Icon(
-                Icons.calendar_month_outlined,
+                Icons.access_alarm_sharp,
                 color: Colors.green.shade600,
                 size: 28,
               ),
