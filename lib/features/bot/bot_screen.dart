@@ -18,6 +18,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/emergency/emergency_service.dart';
+import 'package:wellwiz/secrets.dart';
 import 'message_tile.dart';
 import 'package:wellwiz/features/navbar/navbar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -41,7 +42,7 @@ class _BotScreenState extends State<BotScreen> {
   final TextEditingController _textController = TextEditingController();
   final FocusNode _textFieldFocus = FocusNode();
   bool _loading = false;
-  static const _apiKey = 'AIzaSyBXP6-W3jVAlYPO8cQl_6nFWiUGVpERe6Y';
+  static const _apiKey = geminikey;
   bool falldone = false;
   bool symptomprediction = false;
   String symptoms = "";
