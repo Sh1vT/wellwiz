@@ -2,6 +2,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/emotion/emotion_bot_screen.dart';
+import 'package:wellwiz/features/home/home_page.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/features/reminder/notification_service.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -67,7 +69,7 @@ class _MyAppState extends State<MyApp> {
           ? const Center(child: CircularProgressIndicator())
           : (_user == null)
               ? const LoginScreen()
-              : const BotScreen(),
+              : const HomePage(),
     );
   }
 }
