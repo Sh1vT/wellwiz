@@ -1,6 +1,9 @@
+import 'dart:convert';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -31,6 +34,8 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final SpeechToText _speechToText = SpeechToText();
   bool _speechEnabled = false;
+  late DateTime _startTime;
+  late SharedPreferences _prefs;
 
   void _showError(String message) {
     showDialog(
@@ -111,9 +116,46 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
     setState(() {});
   }
 
+  Future<void> _initializeSharedPreferences() async {
+    _prefs = await SharedPreferences.getInstance();
+  }
+
+  void _endSessionAndStoreTime() async {
+    DateTime _endTime = DateTime.now();
+    int sessionDurationInMinutes = _endTime
+        .difference(_startTime)
+        .inMinutes; // Session duration in minutes
+
+    String currentDate =
+        DateFormat('yyyy-MM-dd').format(_endTime); // Get today's date
+
+    // Retrieve existing day data, if available
+    Map<String, dynamic> dayData = {};
+    if (_prefs.containsKey(currentDate)) {
+      String? jsonData = _prefs.getString(currentDate);
+      if (jsonData != null) {
+        dayData = Map<String, dynamic>.from(
+            jsonDecode(jsonData)); // Decode the stored JSON
+      }
+    }
+
+    // Update or accumulate session time for the current emotion
+    if (dayData.containsKey(currentEmotion)) {
+      dayData[currentEmotion] += sessionDurationInMinutes;
+    } else {
+      dayData[currentEmotion] = sessionDurationInMinutes;
+    }
+
+    // Save the updated data back to SharedPreferences
+    _prefs.setString(
+        currentDate, jsonEncode(dayData)); // Encode map to JSON and save
+    print(dayData);
+    
+  }
+
   @override
   void initState() {
-    currentEmotion=widget.emotion;
+    currentEmotion = widget.emotion;
     _initSpeech();
     super.initState();
     _model = GenerativeModel(
@@ -121,7 +163,16 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
       apiKey: _apiKey,
     );
     _chat = _model.startChat();
-    _sendChatMessage("This is the first message before user has interacted. Just give an intro message.");
+    _sendChatMessage(
+        "This is the first message before user has interacted. Just give an intro message.");
+    _startTime = DateTime.now();
+    _initializeSharedPreferences();
+  }
+
+  @override
+  void dispose() {
+    _endSessionAndStoreTime(); // Calculate and store session time on exit
+    super.dispose();
   }
 
   @override

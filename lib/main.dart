@@ -62,6 +62,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'WellWiz',
       theme: ThemeData(
+        fontFamily: 'Mulish',
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
