@@ -848,11 +848,6 @@ class _BotScreenState extends State<BotScreen> {
               fontFamily: 'Mulish'),
         ),
       ),
-      drawer: Navbar(
-        userId: _auth.currentUser?.uid ?? '',
-        username: username,
-        userimg: userimg,
-      ), // Pass userId here
       body: _charloading
           ? Center(
               child: CircularProgressIndicator(
