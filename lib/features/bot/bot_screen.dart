@@ -612,7 +612,7 @@ class _BotScreenState extends State<BotScreen> {
           The profile section starts now: $profile. Profile section has ended. 
           Respond naturally to the user as a chatbot, but if the user is asking some advice then and only then use the profile section. 
           Also if the user is asking for appointment booking, simply respond with the word "appointment" and nothing else. 
-          Also if the user is asking for scanning a report or entering health data through a report, simply respond with the word "report" and nothing else. 
+          Also if the user is asking for scanning a report or their message implies they want to scan a report, simply respond with the word "report" and nothing else. 
           Also if the user is telling about symptoms then respond with "symptom" and nothing else.""";
       var response = await _chat.sendMessage(Content.text(prompt));
       // print("Response from model: ${response.text}");
@@ -649,7 +649,7 @@ class _BotScreenState extends State<BotScreen> {
             button: ChatButton(
               label: 'Scan a Report',
               onPressed: () async {
-                print('e');
+                print('Success');
                 getImageCamera(context);
               },
             ),
@@ -830,6 +830,13 @@ class _BotScreenState extends State<BotScreen> {
                 _sosprotocol();
               },
               child: Icon(Icons.sos_rounded))
+              ,
+          MaterialButton(
+              onPressed:  () async {
+                print('Success');
+                getImageCamera(context);
+              },
+              child: Icon(Icons.camera))
         ],
         backgroundColor: Colors.white,
         title: Text(

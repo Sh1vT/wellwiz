@@ -7,6 +7,7 @@ import 'package:wellwiz/features/emergency/emergency_service.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/features/profile/profile.dart';
 import 'package:wellwiz/features/reminder/reminder_page.dart';
+import 'package:wellwiz/features/home/homePage.dart';
 
 class Navbar extends StatelessWidget {
   final String userId;
@@ -95,6 +96,38 @@ class Navbar extends StatelessWidget {
               ),
               onTap: () {
                 Navigator.pop(context);
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Divider(
+                height: 0,
+              ),
+            ),
+
+            ListTile(
+              minTileHeight: 60,
+              leading: Icon(
+                Icons.home,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              trailing: Icon(
+                Icons.arrow_right_rounded,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              title: Text(
+                'Home',
+                style: TextStyle(
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
+              ),
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) {
+                  return HomePage();
+                }));
               },
             ),
             Padding(
