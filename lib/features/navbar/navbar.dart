@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/chatrooms/chatroom_selection_screen.dart';
 import 'package:wellwiz/features/emergency/emergency_service.dart';
-import 'package:wellwiz/features/emotion/emotion_chart_page.dart';
 import 'package:wellwiz/features/home/home_page.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/features/profile/profile.dart';
@@ -150,7 +150,7 @@ class Navbar extends StatelessWidget {
                 size: 28,
               ),
               title: Text(
-                'Emotion Chart',
+                'Chatroom',
                 style: TextStyle(
                     fontFamily: 'Mulish',
                     fontWeight: FontWeight.bold,
@@ -159,7 +159,7 @@ class Navbar extends StatelessWidget {
               onTap: () {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) {
-                  return EmotionChartScreen();
+                  return ChatRoomSelectionScreen();
                 }));
               },
             ),

@@ -23,7 +23,7 @@ class EmotionBotScreen extends StatefulWidget {
 }
 
 class _EmotionBotScreenState extends State<EmotionBotScreen> {
-  bool recommendedMhp=false;
+  bool recommendedMhp = false;
   String currentEmotion = "";
   List<ChatResponse> history = [];
   late final GenerativeModel _model;
@@ -65,7 +65,7 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
 
   void _suggestmhp(String message) async {
     print(recommendedMhp);
-    if(recommendedMhp==true){
+    if (recommendedMhp == true) {
       return;
     }
     String analysisPrompt =
@@ -110,7 +110,7 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
     } else {
       setState(() {
         history.add(ChatResponse(isUser: false, text: response.text!));
-        recommendedMhp=true;
+        recommendedMhp = true;
       });
       _scrollDown();
 
