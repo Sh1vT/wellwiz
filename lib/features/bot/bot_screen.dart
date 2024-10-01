@@ -37,7 +37,7 @@ class _BotScreenState extends State<BotScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   List<ChatResponse> history = [];
   late final GenerativeModel _model;
-  final safetysettings=[
+  final safetysettings = [
     SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
   ];
   late final ChatSession _chat;
@@ -214,10 +214,9 @@ class _BotScreenState extends State<BotScreen> {
   void initState() {
     super.initState();
     _model = GenerativeModel(
-      model: 'gemini-1.5-flash',
-      apiKey: _apiKey,
-      safetySettings: safetysettings
-    );
+        model: 'gemini-1.5-flash',
+        apiKey: _apiKey,
+        safetySettings: safetysettings);
     _chat = _model.startChat();
     _loadChatHistory();
     fall_detection();
@@ -284,23 +283,24 @@ class _BotScreenState extends State<BotScreen> {
   }
 
   void _startTabulatingPrescriptions(String message) async {
-  final SharedPreferences pref = await SharedPreferences.getInstance();
+    final SharedPreferences pref = await SharedPreferences.getInstance();
 
-  // Fetch the existing prescription list from SharedPreferences
-  String? prescriptionsJson = pref.getString("prescriptions");
-  List<List<dynamic>> prescriptionsList = [];
+    // Fetch the existing prescription list from SharedPreferences
+    String? prescriptionsJson = pref.getString("prescriptions");
+    List<List<dynamic>> prescriptionsList = [];
 
-  if (prescriptionsJson != null && prescriptionsJson.isNotEmpty) {
-    try {
-      prescriptionsList = List<List<dynamic>>.from(
-          jsonDecode(prescriptionsJson).map((item) => List<dynamic>.from(item)));
-    } catch (e) {
-      print("Error decoding JSON: $e");
+    if (prescriptionsJson != null && prescriptionsJson.isNotEmpty) {
+      try {
+        prescriptionsList = List<List<dynamic>>.from(
+            jsonDecode(prescriptionsJson)
+                .map((item) => List<dynamic>.from(item)));
+      } catch (e) {
+        print("Error decoding JSON: $e");
+      }
     }
-  }
 
-  // Prepare the prompt for the model
-  String prompt = """
+    // Prepare the prompt for the model
+    String prompt = """
   You're being used for demonstration purposes only. 
 Analyze the following message for any mentions of medication and dosage. 
 A proper response should be in the format "Medication : Dosage" where both values are directly taken from the message provided.
@@ -316,46 +316,45 @@ The message has ended.
 If there is no mention of a medication or dosage, respond with "none."
   """;
 
-  var content = [Content.text(prompt)];
-  final response = await _model.generateContent(content);
+    var content = [Content.text(prompt)];
+    final response = await _model.generateContent(content);
 
-  // Exit early if the response is "none"
-  if (response.text!.toLowerCase().trim() == "none") {
-    print('Model response: ${response.text}');
-    return;
-  }
-  print('triggered');
+    // Exit early if the response is "none"
+    if (response.text!.toLowerCase().trim() == "none") {
+      print('Model response: ${response.text}');
+      return;
+    }
+    print('triggered');
 
-  // Split the response into medication and dosage
-  List<String> parts = response.text!.split(':');
-  if (parts.length == 2) {
-    print('Model response: ${response.text}');
-    String medication = parts[0].trim();
-    String dosage = parts[1].trim();
+    // Split the response into medication and dosage
+    List<String> parts = response.text!.split(':');
+    if (parts.length == 2) {
+      print('Model response: ${response.text}');
+      String medication = parts[0].trim();
+      String dosage = parts[1].trim();
 
-    // Check if the medication already exists in the list, update if necessary
-    bool found = false;
-    for (var entry in prescriptionsList) {
-      if (entry[0] == medication) {
-        entry[1] = dosage; // Update dosage
-        found = true;
-        break;
+      // Check if the medication already exists in the list, update if necessary
+      bool found = false;
+      for (var entry in prescriptionsList) {
+        if (entry[0] == medication) {
+          entry[1] = dosage; // Update dosage
+          found = true;
+          break;
+        }
       }
+
+      // If the medication is not found, add a new entry
+      if (!found) {
+        prescriptionsList.add([medication, dosage]);
+      }
+
+      // Save the updated list back to SharedPreferences
+      prescriptionsJson = jsonEncode(prescriptionsList);
+      pref.setString('prescriptions', prescriptionsJson);
+
+      print(prescriptionsList);
     }
-
-    // If the medication is not found, add a new entry
-    if (!found) {
-      prescriptionsList.add([medication, dosage]);
-    }
-
-    // Save the updated list back to SharedPreferences
-    prescriptionsJson = jsonEncode(prescriptionsList);
-    pref.setString('prescriptions', prescriptionsJson);
-
-    print(prescriptionsList);
   }
-}
-
 
   void _startTabulating(String message) async {
     print("E");
@@ -909,10 +908,9 @@ If there is no mention of a medication or dosage, respond with "none."
               onPressed: () {
                 _sosprotocol();
               },
-              child: Icon(Icons.sos_rounded))
-              ,
+              child: Icon(Icons.sos_rounded)),
           MaterialButton(
-              onPressed:  () async {
+              onPressed: () async {
                 print('Success');
                 getImageCamera(context);
               },

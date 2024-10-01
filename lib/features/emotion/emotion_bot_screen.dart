@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
@@ -22,6 +23,7 @@ class EmotionBotScreen extends StatefulWidget {
 }
 
 class _EmotionBotScreenState extends State<EmotionBotScreen> {
+  bool recommendedMhp=false;
   String currentEmotion = "";
   List<ChatResponse> history = [];
   late final GenerativeModel _model;
@@ -36,6 +38,8 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
   bool _speechEnabled = false;
   late DateTime _startTime;
   late SharedPreferences _prefs;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String mentalissues = "";
 
   void _showError(String message) {
     showDialog(
@@ -59,6 +63,61 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
     );
   }
 
+  void _suggestmhp(String message) async {
+    print(recommendedMhp);
+    if(recommendedMhp==true){
+      return;
+    }
+    String analysisPrompt =
+        """You are being used as a mental health chatbot for demonstration purposes and not commercially or professionally.
+    The user has entered this message : $message. You have to summarise the message and link up the current and existing analysis.
+    The current analysis is $mentalissues. The current session belongs to this emotion so the user was initially feeling this :$currentEmotion.
+    Now generate a short summary so that the current analysis can be replaced with a better analysis including the current message.
+    """;
+
+    var analysisResponse =
+        await _chat.sendMessage(Content.text(analysisPrompt));
+    setState(() {
+      mentalissues = analysisResponse.text!;
+    });
+
+    // print(mentalissues);
+    QuerySnapshot querySnapshot = await _firestore.collection('mhp').get();
+    List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
+      return {
+        'name': doc['name'],
+        'profession': doc['profession'],
+      };
+    }).toList();
+
+    String prompt =
+        """You are being used as a mental health chatbot for demonstration purposes and not commercially or professionally. 
+    You have to detect the user's messages and analyse how the user is currently feeling so that you can recommend an appropriate doctor.
+    The user is currently feeling $currentEmotion, so take that into consideration too.
+    We have a map of doctors with their name and profession that starts now : $map.
+    The messages of the user so far have been these: $mentalissues. 
+    If you cant suggest a doctor yet, simply respond with a plain text of "none" and nothing else.
+    But Once you think a doctor matches to the user's current mental condition, respond a message that is formatted like this:
+    Tell user that you cant replace an actual mental health professional. Tell them you've looked into the messages so far and it seems user has [issue]. 
+    Then suggest them a [doctor] who specializes in [specialization]... Retur the doctor name and their specialization in bolded letters""";
+
+    var response = await _chat.sendMessage(Content.text(prompt));
+    // print(response.text!);
+
+    if (response.text!.trim().toLowerCase() == "none." ||
+        response.text!.trim().toLowerCase() == "none") {
+      return;
+    } else {
+      setState(() {
+        history.add(ChatResponse(isUser: false, text: response.text!));
+        recommendedMhp=true;
+      });
+      _scrollDown();
+
+      print("added");
+    }
+  }
+
   Future<void> _sendChatMessage(String message) async {
     if (message.trim().isEmpty) {
       return; // Do nothing if the message is empty
@@ -72,6 +131,8 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
 
     _scrollDown(); // Ensure scroll to the bottom after user message
 
+    _suggestmhp(message);
+
     try {
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       String? profile = prefs.getString('prof');
@@ -81,6 +142,7 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
         The user will enter his message now: $message. User message has ended. 
         Currently the user is feeling this emotion: $currentEmotion.
         Give responses in context to the current emotion.
+        Give short responses so that it seems you're chatting.
         Try utilising CBT principles i.e. converting negative thought patterns into positive ones.""";
 
       var response = await _chat.sendMessage(Content.text(prompt));
@@ -150,7 +212,6 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
     _prefs.setString(
         currentDate, jsonEncode(dayData)); // Encode map to JSON and save
     print(dayData);
-    
   }
 
   @override
