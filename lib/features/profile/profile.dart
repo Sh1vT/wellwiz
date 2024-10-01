@@ -12,6 +12,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   Map<String, String> profileMap = {};
   List<List<dynamic>> tableList = [];
+  List<List<dynamic>> prescriptionsList = [];
   bool emptyNow = false;
 
   @override
@@ -33,6 +34,15 @@ class _ProfilePageState extends State<ProfilePage> {
         profileMap = Map<String, String>.from(jsonDecode(prefval));
       });
     }
+
+    String? prescriptionsJson = pref.getString('prescriptions');
+      if (prescriptionsJson != null && prescriptionsJson.isNotEmpty) {
+        setState(() {
+          prescriptionsList = List<List<dynamic>>.from(
+              jsonDecode(prescriptionsJson).map((item) => List<dynamic>.from(item)));
+        });
+      }
+
 
     String? tableJson = pref.getString('table');
     if (tableJson != null && tableJson.isNotEmpty) {
@@ -106,9 +116,71 @@ class _ProfilePageState extends State<ProfilePage> {
     final pref = await SharedPreferences.getInstance();
     setState(() {
       tableList.clear(); // Clear the tableList in memory
+      prescriptionsList.clear();
     });
     await pref.remove('table'); // Remove the 'table' key from SharedPreferences
+    await pref.remove('prescriptions');
   }
+
+  Widget _buildPrescriptionsTable() {
+    if (prescriptionsList.isEmpty) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        child: Text(
+          'No prescriptions available',
+          style: TextStyle(fontSize: 16, fontFamily: 'Mulish'),
+        ),
+      );
+    }
+
+    // Sort the prescriptionsList alphabetically by the first column (Medication)
+    prescriptionsList.sort((a, b) => a[0].compareTo(b[0]));
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Table(
+        border: TableBorder.all(color: Colors.green.shade400, width: 1),
+        columnWidths: const <int, TableColumnWidth>{
+          0: FlexColumnWidth(),
+          1: FlexColumnWidth(),
+        },
+        children: [
+          TableRow(
+            decoration: BoxDecoration(
+              color: Colors.green.shade100,
+            ),
+            children: const [
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Medication',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('Dosage',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          ...prescriptionsList.map((row) {
+            return TableRow(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(row[0]), // Medication
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(row[1]), // Dosage
+                ),
+              ],
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildTable() {
     if (tableList.isEmpty) {
@@ -243,6 +315,24 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             _buildTable(), // Display the table of values
+
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                child: Text(
+                  'Prescriptions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade700,
+                    fontFamily: 'Mulish',
+                  ),
+                ),
+              ),
+            ),
+            _buildPrescriptionsTable(), // Display the prescriptions table
+
 
             Align(
               alignment: Alignment.centerLeft,
