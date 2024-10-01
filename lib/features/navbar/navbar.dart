@@ -4,10 +4,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
 import 'package:wellwiz/features/emergency/emergency_service.dart';
+import 'package:wellwiz/features/emotion/emotion_chart_page.dart';
+import 'package:wellwiz/features/home/home_page.dart';
 import 'package:wellwiz/features/login/login_page.dart';
 import 'package:wellwiz/features/profile/profile.dart';
 import 'package:wellwiz/features/reminder/reminder_page.dart';
-import 'package:wellwiz/features/home/homePage.dart';
 
 class Navbar extends StatelessWidget {
   final String userId;
@@ -78,37 +79,7 @@ class Navbar extends StatelessWidget {
             ListTile(
               minTileHeight: 60,
               leading: Icon(
-                Icons.cyclone_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Wizard',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.home,
+                Icons.home_outlined,
                 color: Colors.green.shade600,
                 size: 28,
               ),
@@ -125,9 +96,7 @@ class Navbar extends StatelessWidget {
                     color: Colors.green.shade600),
               ),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return HomePage();
-                }));
+                Navigator.pop(context);
               },
             ),
             Padding(
@@ -159,6 +128,38 @@ class Navbar extends StatelessWidget {
                 Navigator.of(context)
                     .push(MaterialPageRoute(builder: (context) {
                   return ProfilePage();
+                }));
+              },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: Divider(
+                height: 0,
+              ),
+            ),
+            ListTile(
+              minTileHeight: 60,
+              leading: Icon(
+                Icons.note_alt_outlined,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              trailing: Icon(
+                Icons.arrow_right_rounded,
+                color: Colors.green.shade600,
+                size: 28,
+              ),
+              title: Text(
+                'Emotion Chart',
+                style: TextStyle(
+                    fontFamily: 'Mulish',
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green.shade600),
+              ),
+              onTap: () {
+                Navigator.of(context)
+                    .push(MaterialPageRoute(builder: (context) {
+                  return EmotionChartScreen();
                 }));
               },
             ),
@@ -294,13 +295,6 @@ class Navbar extends StatelessWidget {
             Container(
               height: 100,
               color: Colors.grey.shade50,
-              // decoration: BoxDecoration(
-              //   gradient: LinearGradient(
-              //     colors: [Colors.grey.shade200, Colors.green.shade200],
-              //     begin: Alignment.topCenter,
-              //     end: Alignment.bottomCenter,
-              //   ),
-              // ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [

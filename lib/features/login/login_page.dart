@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/home/home_page.dart';
 import 'package:wellwiz/features/login/sign_in_button.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -38,7 +39,7 @@ class LoginScreen extends StatelessWidget {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const BotScreen()),
+        MaterialPageRoute(builder: (context) => const HomePage()),
       );
     } catch (e) {
       print("Exception: $e");
