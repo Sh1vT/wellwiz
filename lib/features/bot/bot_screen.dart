@@ -37,6 +37,9 @@ class _BotScreenState extends State<BotScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   List<ChatResponse> history = [];
   late final GenerativeModel _model;
+  final safetysettings=[
+    SafetySetting(HarmCategory.dangerousContent, HarmBlockThreshold.none),
+  ];
   late final ChatSession _chat;
   final ScrollController _scrollController = ScrollController();
   final TextEditingController _textController = TextEditingController();
@@ -213,6 +216,7 @@ class _BotScreenState extends State<BotScreen> {
     _model = GenerativeModel(
       model: 'gemini-1.5-flash',
       apiKey: _apiKey,
+      safetySettings: safetysettings
     );
     _chat = _model.startChat();
     _loadChatHistory();
@@ -278,6 +282,80 @@ class _BotScreenState extends State<BotScreen> {
     prefs.setString('prof', profileJson);
     // print(profileMap);
   }
+
+  void _startTabulatingPrescriptions(String message) async {
+  final SharedPreferences pref = await SharedPreferences.getInstance();
+
+  // Fetch the existing prescription list from SharedPreferences
+  String? prescriptionsJson = pref.getString("prescriptions");
+  List<List<dynamic>> prescriptionsList = [];
+
+  if (prescriptionsJson != null && prescriptionsJson.isNotEmpty) {
+    try {
+      prescriptionsList = List<List<dynamic>>.from(
+          jsonDecode(prescriptionsJson).map((item) => List<dynamic>.from(item)));
+    } catch (e) {
+      print("Error decoding JSON: $e");
+    }
+  }
+
+  // Prepare the prompt for the model
+  String prompt = """
+  You're being used for demonstration purposes only. 
+Analyze the following message for any mentions of medication and dosage. 
+A proper response should be in the format "Medication : Dosage" where both values are directly taken from the message provided.
+Do not generate or assume medications or dosages that are not explicitly mentioned in the message.
+
+Examples:
+- "I have been asked to take apixaban 5 mg every day" -> "Apixaban : 5 mg"
+- "I have been prescribed 20 mg of aspirin" -> "Aspirin : 20 mg"
+
+The message starts now: $message.
+The message has ended.
+
+If there is no mention of a medication or dosage, respond with "none."
+  """;
+
+  var content = [Content.text(prompt)];
+  final response = await _model.generateContent(content);
+
+  // Exit early if the response is "none"
+  if (response.text!.toLowerCase().trim() == "none") {
+    print('Model response: ${response.text}');
+    return;
+  }
+  print('triggered');
+
+  // Split the response into medication and dosage
+  List<String> parts = response.text!.split(':');
+  if (parts.length == 2) {
+    print('Model response: ${response.text}');
+    String medication = parts[0].trim();
+    String dosage = parts[1].trim();
+
+    // Check if the medication already exists in the list, update if necessary
+    bool found = false;
+    for (var entry in prescriptionsList) {
+      if (entry[0] == medication) {
+        entry[1] = dosage; // Update dosage
+        found = true;
+        break;
+      }
+    }
+
+    // If the medication is not found, add a new entry
+    if (!found) {
+      prescriptionsList.add([medication, dosage]);
+    }
+
+    // Save the updated list back to SharedPreferences
+    prescriptionsJson = jsonEncode(prescriptionsList);
+    pref.setString('prescriptions', prescriptionsJson);
+
+    print(prescriptionsList);
+  }
+}
+
 
   void _startTabulating(String message) async {
     print("E");
@@ -358,6 +436,7 @@ class _BotScreenState extends State<BotScreen> {
     // print("symptomloop function");
     // print("pred value : $symptomprediction");
     _startTabulating(message);
+    _startTabulatingPrescriptions(message);
     QuerySnapshot querySnapshot = await _firestore.collection('doctor').get();
     List<Map<String, dynamic>> map = await querySnapshot.docs.map((doc) {
       return {
@@ -602,6 +681,7 @@ class _BotScreenState extends State<BotScreen> {
     try {
       _startProfiling(message);
       _startTabulating(message);
+      _startTabulatingPrescriptions(message);
       final SharedPreferences prefs = await SharedPreferences.getInstance();
       String? profile = prefs.getString('prof');
       String prompt =

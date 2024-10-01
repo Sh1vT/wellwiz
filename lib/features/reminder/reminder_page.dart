@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:wellwiz/features/reminder/reminder_model.dart';
 import 'reminder_logic.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:wellwiz/features/reminder/thoughts_service.dart'; // Import the ThoughtsService
 
 class ReminderPage extends StatefulWidget {
   final String userId;
@@ -14,63 +15,22 @@ class ReminderPage extends StatefulWidget {
 
 class _ReminderPageState extends State<ReminderPage> {
   final ReminderLogic _reminderLogic = ReminderLogic();
+  final ThoughtsService _thoughtsService = ThoughtsService(); // Instance of ThoughtsService
   List<Reminder> _reminders = [];
   FlutterLocalNotificationsPlugin? _flutterLocalNotificationsPlugin;
 
   @override
   void initState() {
     super.initState();
-    // _initializeNotifications(); // Initialize notifications
     _fetchReminders(); // Fetch reminders on init
-    // _scheduleTestNotification(); // Schedule test notification
   }
 
-  // Future<void> _initializeNotifications() async {
-  //   _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
-  //   const AndroidInitializationSettings initializationSettingsAndroid =
-  //       AndroidInitializationSettings('@mipmap/ic_launcher'); // Change this to your app icon
-
-  //   const InitializationSettings initializationSettings = InitializationSettings(
-  //     android: initializationSettingsAndroid,
-  //   );
-
-  //   await _flutterLocalNotificationsPlugin!.initialize(initializationSettings);
-  // }
-
-  // Future<void> _scheduleTestNotification() async {
-  //   await Future.delayed(Duration(seconds: 10)); // Wait for 10 seconds
-
-  //   const AndroidNotificationDetails androidPlatformChannelSpecifics =
-  //       AndroidNotificationDetails(
-  //     'your_channel_id', // Change this to your channel ID
-  //     'your_channel_name', // Change this to your channel name
-  //     channelDescription: 'Your channel description',
-  //     importance: Importance.max,
-  //     priority: Priority.high,
-  //     showWhen: false,
-  //   );
-
-  //   const NotificationDetails platformChannelSpecifics = NotificationDetails(
-  //     android: androidPlatformChannelSpecifics,
-  //   );
-
-  //   await _flutterLocalNotificationsPlugin!.show(
-  //     0, // Notification ID
-  //     'Appointment', // Notification title
-  //     'My pills', // Notification description
-  //     platformChannelSpecifics,
-  //     payload: 'test_payload', // Optional payload
-  //   );
-  // }
-
   Future<void> _fetchReminders() async {
-    // Fetch reminders from Firestore
     final reminders = await _reminderLogic.fetchReminders(widget.userId);
     setState(() {
       _reminders = reminders;
     });
 
-    // Schedule notifications for each reminder
     await _reminderLogic.scheduleReminders(_reminders);
   }
 
@@ -83,6 +43,28 @@ class _ReminderPageState extends State<ReminderPage> {
     await _reminderLogic.deleteReminder(reminder.id);
     _fetchReminders(); // Refresh the reminders list
   }
+
+  // Function to pick a time and schedule the daily thought notification
+  Future<void> _pickTimeAndScheduleDailyThought() async {
+  final TimeOfDay? selectedTime = await showTimePicker(
+    context: context,
+    initialTime: TimeOfDay.now(),
+  );
+
+  if (selectedTime != null) {
+    // Extract hour and minute from TimeOfDay
+    final int hour = selectedTime.hour;
+    final int minute = selectedTime.minute;
+
+    // Schedule the daily thought with extracted hour and minute
+    await _thoughtsService.scheduleDailyThoughtNotification(hour, minute);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Daily positive thought scheduled for ${selectedTime.format(context)}!")),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +98,6 @@ class _ReminderPageState extends State<ReminderPage> {
         itemBuilder: (context, index) {
           final reminder = _reminders[index];
 
-          // Replicate the UI here
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Container(
@@ -162,6 +143,11 @@ class _ReminderPageState extends State<ReminderPage> {
           );
         },
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _pickTimeAndScheduleDailyThought, // Trigger the time picker and scheduling
+        child: const Icon(Icons.notifications),
+        tooltip: 'Schedule Daily Thought',
+      ),
     );
   }
 
@@ -182,12 +168,10 @@ class _ReminderPageState extends State<ReminderPage> {
             children: [
               TextField(
                 decoration: const InputDecoration(labelText: 'Title'),
-                // onChanged: (value) => title = value,
                 controller: titleController,
               ),
               TextField(
                 decoration: const InputDecoration(labelText: 'Description'),
-                // onChanged: (value) => description = value,
                 controller: descController,
               ),
               TextButton(
@@ -227,11 +211,9 @@ class _ReminderPageState extends State<ReminderPage> {
               child: const Text('Add'),
               onPressed: () {
                 setState(() {
-                  title=titleController.text;
-                  description=descController.text;
+                  title = titleController.text;
+                  description = descController.text;
                 });
-                print(title);
-                print(description);
                 if (title.isNotEmpty && description.isNotEmpty && scheduledTime != null) {
                   _addReminder(title, description, scheduledTime!);
                   Navigator.of(context).pop();

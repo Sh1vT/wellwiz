@@ -63,7 +63,7 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.high,
         playSound: false,    // Disable sound if not needed
-        styleInformation: DefaultStyleInformation(true, true),  // Simplified notification style
+        styleInformation: BigTextStyleInformation(''),  // Simplified notification style
       ),
     ),
     androidAllowWhileIdle: true,
@@ -98,6 +98,7 @@ class NotificationService {
         importance: Importance.max,
         priority: Priority.high,
         playSound: true,
+        styleInformation: BigTextStyleInformation(''),
       ),
     ),
   );
