@@ -1,4 +1,3 @@
-// navbar.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wellwiz/features/appointments/doc_view.dart';
@@ -54,16 +53,11 @@ class Navbar extends StatelessWidget {
                       Container(
                           padding: EdgeInsets.symmetric(horizontal: 3),
                           decoration: BoxDecoration(
-                            // color: Color.fromARGB(255, 181, 245, 143),
                             border: Border.all(
                               width: 3,
                               color: Color.fromARGB(255, 42, 119, 72),
                             ),
-                            borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(12),
-                                bottomLeft: Radius.circular(12),
-                                topRight: Radius.circular(12),
-                                bottomRight: Radius.circular(12)),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
                             username,
@@ -77,299 +71,163 @@ class Navbar extends StatelessWidget {
                 )
               ],
             ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.home_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Home',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.home_outlined,
+              label: 'Home',
               onTap: () {
-                Navigator.pop(context);
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => HomePage(),
+                ));
               },
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.note_alt_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Profile',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.note_alt_outlined,
+              label: 'Profile',
               onTap: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return ProfilePage();
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => ProfilePage(),
+                ));
               },
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.chat_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Chatroom',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.chat_outlined,
+              label: 'Chatroom',
               onTap: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return ChatRoomSelectionScreen();
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => ChatRoomSelectionScreen(),
+                ));
               },
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 70,
-              leading: Icon(
-                Icons.calendar_month_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Appointment',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.calendar_month_outlined,
+              label: 'Appointment',
               onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => DocView(userId: userId)),
-                );
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => DocView(userId: userId),
+                ));
               },
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 70,
-              leading: Icon(
-                Icons.notifications_active_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Emergency',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.notifications_active_outlined,
+              label: 'Emergency',
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) {
-                  return EmergencyScreen();
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => EmergencyScreen(),
+                ));
               },
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.run_circle_outlined,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Exercise',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.run_circle_outlined,
+              label: 'Exercise',
               onTap: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return ExerciseListPage();
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => ExerciseListPage(),
+                ));
               },
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.access_alarm_sharp,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Reminders',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.access_alarm_sharp,
+              label: 'Reminders',
               onTap: () {
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return ReminderPage(userId: userId);
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => ReminderPage(userId: userId),
+                ));
               },
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0),
-              child: Divider(
-                height: 0,
-              ),
-            ),
-            ListTile(
-              minTileHeight: 60,
-              leading: Icon(
-                Icons.power_settings_new_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              trailing: Icon(
-                Icons.arrow_right_rounded,
-                color: Colors.green.shade600,
-                size: 28,
-              ),
-              title: Text(
-                'Logout',
-                style: TextStyle(
-                    fontFamily: 'Mulish',
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green.shade600),
-              ),
+            _buildListTile(
+              context: context,
+              icon: Icons.power_settings_new_rounded,
+              label: 'Logout',
               onTap: () async {
                 await FirebaseAuth.instance.signOut();
-                Navigator.of(context)
-                    .push(MaterialPageRoute(builder: (context) {
-                  return LoginScreen();
-                }));
+                Navigator.of(context).pushReplacement(MaterialPageRoute(
+                  builder: (context) => LoginScreen(),
+                ));
               },
             ),
             Spacer(),
-            Container(
-              height: 100,
-              color: Colors.grey.shade50,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ClipOval(
-                    child: Image.asset(
-                      'assets/images/logo.jpeg',
-                      width: 64,
-                      height: 64,
-                      isAntiAlias: true,
-                    ),
-                  ),
-                  const SizedBox(
-                    width: 12,
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Well",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Mulish',
-                            fontSize: 40,
-                            color: Color.fromRGBO(180, 207, 126, 1)),
-                      ),
-                      Text(
-                        "Wiz",
-                        style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontFamily: 'Mulish',
-                            fontSize: 40,
-                            color: Colors.grey.shade700),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            )
+            _buildFooterLogo(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildListTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required Function onTap,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          minTileHeight: 60,
+          leading: Icon(icon, color: Colors.green.shade600, size: 28),
+          trailing: Icon(Icons.arrow_right_rounded,
+              color: Colors.green.shade600, size: 28),
+          title: Text(
+            label,
+            style: TextStyle(
+                fontFamily: 'Mulish',
+                fontWeight: FontWeight.bold,
+                color: Colors.green.shade600),
+          ),
+          onTap: () => onTap(),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
+          child: Divider(height: 0),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFooterLogo() {
+    return Container(
+      height: 100,
+      color: Colors.grey.shade50,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          ClipOval(
+            child: Image.asset(
+              'assets/images/logo.jpeg',
+              width: 64,
+              height: 64,
+              isAntiAlias: true,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Well",
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Mulish',
+                    fontSize: 40,
+                    color: Color.fromRGBO(180, 207, 126, 1)),
+              ),
+              Text(
+                "Wiz",
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Mulish',
+                    fontSize: 40,
+                    color: Colors.grey.shade700),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
