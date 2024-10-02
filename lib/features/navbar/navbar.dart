@@ -123,8 +123,8 @@ class Navbar extends StatelessWidget {
             ),
             _buildListTile(
               context: context,
-              icon: Icons.run_circle_outlined,
-              label: 'Exercise',
+              icon: Icons.psychology_outlined,
+              label: 'Peace Zone',
               onTap: () {
                 Navigator.of(context).pushReplacement(MaterialPageRoute(
                   builder: (context) => ExerciseListPage(),
