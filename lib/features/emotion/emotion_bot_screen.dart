@@ -142,7 +142,6 @@ class _EmotionBotScreenState extends State<EmotionBotScreen> {
         The user will enter his message now: $message. User message has ended. 
         Currently the user is feeling this emotion: $currentEmotion.
         Give responses in context to the current emotion.
-        Give short responses so that it seems you're chatting.
         Try utilising CBT principles i.e. converting negative thought patterns into positive ones.""";
 
       var response = await _chat.sendMessage(Content.text(prompt));
