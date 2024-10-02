@@ -1,5 +1,5 @@
 import 'dart:convert';
-
+import 'dart:math';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +31,7 @@ class _HomePageState extends State<HomePage> {
   String? selectedDay;
   Map<String, int> emotionDistribution = {};
   late SharedPreferences _prefs;
+  int randomImageIndex = 1;
 
   Future<void> _loadData() async {
     _prefs = await SharedPreferences.getInstance();
@@ -375,6 +376,7 @@ class _HomePageState extends State<HomePage> {
     _chat = _model.startChat();
     generateThought();
     _loadData();
+    randomImageIndex = (Random().nextInt(7));
   }
 
   @override
@@ -751,7 +753,7 @@ class _HomePageState extends State<HomePage> {
                   child: AspectRatio(
                     aspectRatio: 16 / 9, // 16:9 aspect ratio
                     child: Image.asset(
-                      'assets/images/happy1.jpeg',
+                      'assets/thought/$randomImageIndex.png',
                       fit: BoxFit.cover,
                       width: double.infinity,
                     ),

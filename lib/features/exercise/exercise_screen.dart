@@ -23,9 +23,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   void initState() {
     super.initState();
     // Get total duration and ensure it's at least 60 seconds
-    _totalDuration = getTotalDurationForExercise(widget.exercise) ?? 60;
-    if (_totalDuration < 60) {
-      _totalDuration = 60; // Ensure minimum duration is 60 seconds
+    _totalDuration = getTotalDurationForExercise(widget.exercise) ?? 120;
+    if (_totalDuration < 120) {
+      _totalDuration = 120; // Ensure minimum duration is 60 seconds
     }
     startTimer();
   }
@@ -115,7 +115,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       body: Container(
         width: screenWidth,
         height: screenHeight,
-        color: Colors.green.shade100, // Background color for the page
+        color: Colors.white, // Background color for the page
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -140,7 +140,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               height: screenWidth * 0.6,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.green.shade700, // Darker green for circular background
+                color: Colors.grey.shade100, // Darker green for circular background
               ),
               child: Center(
                 child: ClipOval(
@@ -170,15 +170,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
 final Map<String, List<Map<String, dynamic>>> exerciseSteps = {
   'Deep Breathing': [
-    {'instruction': 'Inhale deeply', 'duration': 4},
-    {'instruction': 'Hold your breath', 'duration': 7},
+    {'instruction': 'Inhale deeply', 'duration': 8},
+    {'instruction': 'Hold your breath', 'duration': 8},
     {'instruction': 'Exhale slowly', 'duration': 8},
   ],
   'Box Breathing': [
-    {'instruction': 'Inhale for 4 seconds', 'duration': 4},
-    {'instruction': 'Hold for 4 seconds', 'duration': 4},
-    {'instruction': 'Exhale for 4 seconds', 'duration': 4},
-    {'instruction': 'Hold for 4 seconds', 'duration': 4},
+    {'instruction': 'Inhale for 6 seconds', 'duration': 6},
+    {'instruction': 'Hold for 6 seconds', 'duration': 6},
+    {'instruction': 'Exhale for 6 seconds', 'duration': 6},
+    {'instruction': 'Hold for 6 seconds', 'duration': 6},
   ],
   '4-7-8 Breathing': [
     {'instruction': 'Inhale for 4 seconds', 'duration': 4},
@@ -186,15 +186,15 @@ final Map<String, List<Map<String, dynamic>>> exerciseSteps = {
     {'instruction': 'Exhale for 8 seconds', 'duration': 8},
   ],
   'Alternate Nostril Breathing': [
-    {'instruction': 'Close right nostril and inhale through left nostril', 'duration': 4},
-    {'instruction': 'Hold breath, close both nostrils', 'duration': 4},
-    {'instruction': 'Open right nostril and exhale', 'duration': 4},
-    {'instruction': 'Repeat on the other side', 'duration': 4},
+    {'instruction': 'Close right nostril and inhale through left nostril', 'duration': 6},
+    {'instruction': 'Hold breath, close both nostrils', 'duration': 6},
+    {'instruction': 'Open right nostril and exhale', 'duration': 6},
+    {'instruction': 'Repeat on the other side', 'duration': 6},
   ],
   // New exercises
   'Happy Breathing': [
-    {'instruction': 'Inhale slowly while smiling', 'duration': 4},
-    {'instruction': 'Hold the breath, focus on happy thoughts', 'duration': 5},
+    {'instruction': 'Inhale slowly while smiling', 'duration': 6},
+    {'instruction': 'Hold the breath, focus on happy thoughts', 'duration': 8},
     {'instruction': 'Exhale while imagining joy spreading', 'duration': 6},
   ],
   'Calm Down Breathing': [
@@ -203,13 +203,13 @@ final Map<String, List<Map<String, dynamic>>> exerciseSteps = {
     {'instruction': 'Exhale calmly through the mouth', 'duration': 7},
   ],
   'Stress Relief Breathing': [
-    {'instruction': 'Inhale deeply, hold for a moment', 'duration': 4},
+    {'instruction': 'Inhale deeply, hold for a moment', 'duration': 6},
     {'instruction': 'Exhale slowly, releasing tension', 'duration': 6},
-    {'instruction': 'Focus on releasing stress with each breath', 'duration': 5},
+    {'instruction': 'Focus on releasing stress with each breath', 'duration': 6},
   ],
   'Relaxed Mind Breathing': [
-    {'instruction': 'Inhale deeply through your nose', 'duration': 4},
-    {'instruction': 'Hold and relax your mind', 'duration': 6},
-    {'instruction': 'Exhale completely', 'duration': 6},
+    {'instruction': 'Inhale deeply through your nose', 'duration': 6},
+    {'instruction': 'Hold and relax your mind', 'duration': 8},
+    {'instruction': 'Exhale completely', 'duration': 8},
   ],
 };
