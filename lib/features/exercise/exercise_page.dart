@@ -16,7 +16,7 @@ class ExerciseListPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green.shade100,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text(
           'Breathing Exercises',
@@ -109,7 +109,7 @@ class ExerciseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color cardColor = Colors.green.shade400;
+    final Color cardColor = Color.fromARGB(255, 106, 172, 67);
 
     return GestureDetector(
       onTap: onTap,
