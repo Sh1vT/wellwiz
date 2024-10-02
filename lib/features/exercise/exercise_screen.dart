@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:audioplayers/audioplayers.dart'; // Add this
 
 class ExerciseScreen extends StatefulWidget {
   final String exercise;
@@ -19,9 +21,17 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   int _currentPhaseIndex = 0;
   String _currentInstruction = 'Get ready...';
 
+  // Audio player instance
+  late AudioPlayer _audioPlayer;
+
   @override
   void initState() {
     super.initState();
+
+    // Initialize AudioPlayer and start the music
+    _audioPlayer = AudioPlayer();
+    _playMusic();
+
     // Get total duration and ensure it's at least 60 seconds
     _totalDuration = getTotalDurationForExercise(widget.exercise) ?? 120;
     if (_totalDuration < 120) {
@@ -51,6 +61,21 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     });
   }
 
+  // Play music function
+  Future<void> _playMusic() async {
+    try {
+      // Generate a random number between 1 and 4
+      int randomFileNumber = Random().nextInt(4) + 1; // Generates 1, 2, 3, or 4
+
+      // Load audio from assets using the randomly chosen file
+      await _audioPlayer.setSource(AssetSource('music/$randomFileNumber.mp3')); // Play the random file
+      await _audioPlayer.resume(); // Start playing the audio
+    } catch (e) {
+      print('Error loading audio: $e'); // Error handling
+    }
+  }
+
+
   void updateCurrentInstruction() {
     if (exerciseSteps[widget.exercise] != null) {
       int totalSteps = exerciseSteps[widget.exercise]!.length;
@@ -76,6 +101,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   void _showCompletionDialog() {
+     _audioPlayer.stop(); // Stop the music when the widget is disposed
+    _audioPlayer.dispose(); // Dispose the player to free resources
     showDialog(
       context: context,
       builder: (context) {
@@ -100,6 +127,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   void dispose() {
     _timer.cancel();
     super.dispose();
+    _audioPlayer.stop(); // Stop the music when the widget is disposed
+    _audioPlayer.dispose(); // Dispose the player to free resources
   }
 
   @override
