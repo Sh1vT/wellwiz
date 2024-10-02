@@ -116,7 +116,7 @@ class DoctorTile extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
         decoration: BoxDecoration(
-          color: Colors.green.shade100,
+          color: Colors.grey.shade300,
           // border: Border.all(color: Colors.green.shade700, width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
@@ -127,7 +127,8 @@ class DoctorTile extends StatelessWidget {
               height: 100,
               width: 100,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.green.shade600, width: 3),
+                border: Border.all(
+                    color: Color.fromRGBO(106, 172, 67, 1), width: 3),
                 shape: BoxShape.circle,
                 image: DecorationImage(
                   image: NetworkImage(doctor.imageUrl),
@@ -142,7 +143,7 @@ class DoctorTile extends StatelessWidget {
             Text(
               doctor.name,
               style: TextStyle(
-                  color: Colors.green.shade600,
+                  color: Color.fromRGBO(106, 172, 67, 1),
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   fontFamily: 'Mulish'),
@@ -153,7 +154,7 @@ class DoctorTile extends StatelessWidget {
               doctor.speciality,
               style: TextStyle(
                 fontSize: 14,
-                color: Colors.black87,
+                color: Colors.grey.shade600,
                 fontFamily: 'Mulish',
               ),
               textAlign: TextAlign.center,

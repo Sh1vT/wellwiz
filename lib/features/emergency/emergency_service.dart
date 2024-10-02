@@ -1,11 +1,13 @@
 import 'dart:convert';
 import 'package:dotted_border/dotted_border.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wellwiz/features/bot/bot_screen.dart';
+import 'package:wellwiz/features/navbar/navbar.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -16,6 +18,17 @@ class EmergencyScreen extends StatefulWidget {
 
 class _EmergencyScreenState extends State<EmergencyScreen> {
   final List<ContactData> contacts = [];
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String username = "";
+  String userimg = "";
+
+  void _getUserInfo() async {
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    setState(() {
+      username = pref.getString('username')!;
+      userimg = pref.getString('userimg')!;
+    });
+  }
 
   Future<void> _saveContacts(ContactData contactData) async {
     final prefs = await SharedPreferences.getInstance();
@@ -115,7 +128,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   void initState() {
     // TODO: implement initState
     super.initState();
-
+    _getUserInfo();
     _loadContacts();
   }
 
@@ -123,27 +136,36 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        leading: CupertinoButton(
-            child: const Icon(
-              Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 18,
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-            }),
-        backgroundColor: Colors.green.shade400,
-        title: const Text(
-          "Emergency Contacts",
-          style: TextStyle(
-              color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700, fontFamily: 'Mulish'),
-        ),
-        centerTitle: true,
+      appBar: AppBar(),
+      drawer: Navbar(
+        userId: _auth.currentUser?.uid ?? '',
+        username: username,
+        userimg: userimg,
       ),
       body: ListView(
         children: [
-
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "SOS",
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Mulish',
+                    fontSize: 40,
+                    color: Color.fromRGBO(106, 172, 67, 1)),
+              ),
+              Text(
+                " Contacts",
+                style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontFamily: 'Mulish',
+                    fontSize: 40,
+                    color: const Color.fromRGBO(97, 97, 97, 1)),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
           contacts.isEmpty
               ? Container(
                   margin: const EdgeInsets.all(16),
@@ -244,7 +266,8 @@ class ContactWidget extends StatelessWidget {
     ];
     Color randomColor = colorPalette[index % colorPalette.length];
     return Column(
-      children: [SizedBox(height: 8),
+      children: [
+        SizedBox(height: 8),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           padding: const EdgeInsets.all(16),
