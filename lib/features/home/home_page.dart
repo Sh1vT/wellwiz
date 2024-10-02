@@ -146,7 +146,9 @@ class _HomePageState extends State<HomePage> {
           ),
           actions: [
             ElevatedButton(
-              style: ButtonStyle(backgroundColor: WidgetStatePropertyAll(Color.fromARGB(255, 106, 172, 67))),
+              style: ButtonStyle(
+                  backgroundColor: WidgetStatePropertyAll(
+                      Color.fromARGB(255, 106, 172, 67))),
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
                 'Close',
@@ -215,7 +217,13 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  bool _hasData() {
+  List<String> currentWeekDays = _getCurrentWeekDays();
+  return currentWeekDays.any((day) => _getTotalTimeForDay(day) > 0);
+}
+
   Widget _buildBarChart() {
+
     return BarChart(
       BarChartData(
         alignment: BarChartAlignment.spaceAround,
@@ -372,19 +380,7 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        actions: [
-          MaterialButton(onPressed: () {}, child: Icon(Icons.sos_rounded))
-        ],
-        title: Text(
-          'Wizard',
-          style: TextStyle(
-              color: Colors.green.shade600,
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              fontFamily: 'Mulish'),
-        ),
-      ),
+      appBar: AppBar(),
       drawer: Navbar(
         userId: _auth.currentUser?.uid ?? '',
         username: username,
@@ -393,7 +389,68 @@ class _HomePageState extends State<HomePage> {
       body: ListView(
         padding: EdgeInsets.zero, // Optional: removes any default padding
         children: <Widget>[
-          const SizedBox(height: 20),
+          Container(
+            height: 80,
+            color: Colors.grey.shade50,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Wel",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 106, 172, 67)),
+                    ),
+                    Text(
+                      "Come",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 14,
+                          color: const Color.fromRGBO(97, 97, 97, 1)),
+                    ),
+                    Text(
+                      " to",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 14,
+                          color: const Color.fromRGBO(97, 97, 97, 1)),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Well",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 40,
+                          color: Color.fromARGB(255, 106, 172, 67)),
+                    ),
+                    Text(
+                      "Wiz",
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontFamily: 'Mulish',
+                          fontSize: 40,
+                          color: const Color.fromRGBO(97, 97, 97, 1)),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            height: 20,
+          ),
           GestureDetector(
             onTap: () {
               Navigator.push(context, MaterialPageRoute(builder: (context) {
@@ -493,28 +550,21 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 16.0),
-                  // Grid of smaller buttons
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
-                    child: SizedBox(
-                      height: 200,
-                      child: GridView.count(
-                        crossAxisCount: 2,
-                        shrinkWrap: true,
-                        physics:
-                            NeverScrollableScrollPhysics(), // Prevents scrolling inside GridView
-                        mainAxisSpacing: 20.0,
-                        crossAxisSpacing: 20.0,
-                        childAspectRatio: 3,
-                        children: <Widget>[
-                          ElevatedButton(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Happy");
                               }));
                             },
@@ -526,14 +576,17 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                          ElevatedButton(
+                        ),
+                        const SizedBox(width: 20.0), // Space between buttons
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Sad");
                               }));
                             },
@@ -545,14 +598,26 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                          ElevatedButton(
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Angry");
                               }));
                             },
@@ -564,14 +629,17 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                          ElevatedButton(
+                        ),
+                        const SizedBox(width: 20.0),
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Anxious");
                               }));
                             },
@@ -583,14 +651,26 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                          ElevatedButton(
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20.0),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Frustrated");
                               }));
                             },
@@ -602,14 +682,17 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                          ElevatedButton(
+                        ),
+                        const SizedBox(width: 20.0),
+                        Expanded(
+                          child: TextButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   Color.fromARGB(255, 106, 172, 67),
                             ),
                             onPressed: () {
                               Navigator.push(context,
-                                  MaterialPageRoute(builder: (conext) {
+                                  MaterialPageRoute(builder: (context) {
                                 return EmotionBotScreen(emotion: "Stressed");
                               }));
                             },
@@ -621,8 +704,8 @@ class _HomePageState extends State<HomePage> {
                                   fontSize: 14),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 16.0),
@@ -634,7 +717,7 @@ class _HomePageState extends State<HomePage> {
           SizedBox(
             height: 20,
           ),
-          Column(
+          _hasData()? Column(
             children: [
               const SizedBox(height: 20),
               Text(
@@ -653,7 +736,7 @@ class _HomePageState extends State<HomePage> {
                 child: _buildBarChart(),
               ),
             ],
-          ),
+          ):Container() ,
           SizedBox(
             height: 20,
           ),
@@ -689,14 +772,13 @@ class _HomePageState extends State<HomePage> {
                     children: [
                       Text(
                         thoughtGenerated
-                            ? "“ " + thought.replaceAll('\n', '')
+                            ? "“" + thought.replaceAll('\n', '') + "”"
                             : "Wizard is thinking...",
                         style: TextStyle(
                             color: Colors.white,
                             fontFamily: 'Mulish',
                             fontSize: 16),
                       ),
-                      // SizedBox(height: 4),
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
@@ -714,6 +796,7 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
+          SizedBox(height: 20,)
         ],
       ),
     );

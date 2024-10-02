@@ -141,7 +141,7 @@ class Navbar extends StatelessWidget {
             ListTile(
               minTileHeight: 60,
               leading: Icon(
-                Icons.note_alt_outlined,
+                Icons.chat_outlined,
                 color: Colors.green.shade600,
                 size: 28,
               ),

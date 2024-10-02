@@ -78,30 +78,23 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     bool isGeminiCommand = message.startsWith('/wiz');
 
     // Prepare the prompt for the Gemini model
-    String prompt =
-        """You are being used as a mental health chatbot for demonstration purposes and not commercially or professionally.
-      Currently you are employed as a gateway inside a chatroom. The user is going to enter their message.
-      Their message starts now : $message. The message has ended.
-      Bear in mind that this chatbot application was designed for people to seek mental help and reduce strain of their daily lives, so you can allow mild political discussions or darker themed jokes and gags.
-      However you cannot allow some user to demean others. They might demean themselves, allow that because the other users will only help them feel better. You can also allow mild usage of swears.
-      Hence, If you think the message by user is insensitive and may harm other users in the chatroom mentally then respond with the plain text of "no" and nothing else.
-      If the message is targeted to you, which is decided if the message starts with "/wiz", then reply to that message.
-      If the message is well and good and not targeted to you (not starting with "/wiz") either but others in the chatroom then reply with plain text of "someone" and nothing else.
-      """;
 
     // Check if the message is targeted to Gemini
     if (isGeminiCommand) {
       // Send the message to the Gemini model
-      var response = await _chat.sendMessage(Content.text(prompt));
+      String promptforGemini = """You are being used as a mental health chatbot for demonstration purposes and not commercially or professionally.
+      The user has entered this message: $message. Respond to that message. 
+      """;
+      var response = await _chat.sendMessage(Content.text(message));
       print("Response : " + response.text!);
 
-      if (response.text!.trim().toLowerCase() == "no" ||
-          response.text!.trim().toLowerCase() == "no.") {
-        setState(() {
-          _loading = false;
-        });
-        return; // If the response is "no", don't save the message
-      }
+      // if (response.text!.trim().toLowerCase() == "no" ||
+      //     response.text!.trim().toLowerCase() == "no.") {
+      //   setState(() {
+      //     _loading = false;
+      //   });
+      //   return; // If the response is "no", don't save the message
+      // }
 
       // Save the user's message and Gemini's response to Firestore
       try {
@@ -139,7 +132,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         _showError(e.toString());
       }
     } else {
+      String prompt =
+          """You are being used as a mental health chatbot for demonstration purposes and not commercially or professionally.
+      Currently you are employed as a gateway inside a chatroom. The user is going to enter their message.
+      Their message starts now : $message. The message has ended.
+      Bear in mind that this chatbot application was designed for people to seek mental help and reduce strain of their daily lives, so you can allow mild political discussions or darker themed jokes and gags.
+      However you cannot allow some user to demean others. They might demean themselves, allow that because the other users will only help them feel better. You can also allow mild usage of swears.
+      Hence, If you think the message by user is insensitive and may harm other users in the chatroom mentally then respond with the plain text of "no" and nothing else.
+      If the message is targeted to you, which is decided if the message starts with "/wiz", then reply to that message.
+      If the message is well and good and not targeted to you (not starting with "/wiz") either but others in the chatroom then reply with plain text of "someone" and nothing else.
+      """;
       var response = await _chat.sendMessage(Content.text(prompt));
+      print(response.text!);
       if (response.text!.trim().toLowerCase() == "no" ||
           response.text!.trim().toLowerCase() == "no.") {
         setState(() {
@@ -375,7 +379,7 @@ class MessageTile extends StatelessWidget {
                       : const Radius.circular(12),
                 ),
                 color: isGemini
-                    ? Colors.grey.shade200// Different color for Gemini
+                    ? Colors.grey.shade200 // Different color for Gemini
                     : (sendByMe ? Colors.green.shade400 : Colors.grey.shade200),
               ),
               child: MarkdownBody(
